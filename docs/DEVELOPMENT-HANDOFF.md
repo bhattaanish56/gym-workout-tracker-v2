@@ -2,6 +2,53 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## DEV-003a continuation
+
+Implemented after the user instructed continuous development beyond DEV-002:
+
+- Claude proposed dependency/bootstrap changes using the reviewed generic task
+  manifest mode. The strict automated parser rejected surrounding prose/code
+  fences; the supervisor manually inspected the response, validated its four
+  output paths, and applied the reviewed JSON contents.
+- Added and resolved flutter_riverpod 3.5.0, go_router 18.1.4, drift 2.35.4,
+  drift_flutter 0.3.1 and path_provider 2.1.6. Lockfile records the resolved graph.
+- The real entry point now installs ProviderScope. The widget test calls that
+  entry point, checks the scope exists and verifies the counter interaction.
+- Dependency resolution, Dart formatting, analysis, one widget test and a Web
+  release build passed. Evidence: `build/unattended-pilot/dev003a-validation/`.
+- Nine runner tests passed, including task-path rejection and Windows job
+  cleanup when the supervisor exits. Generic task manifests have explicit
+  input/output source paths; proposals still require supervisor review/application.
+- Android debug build failed installing NDK 28.2.13676358 because C: ran out of
+  disk space. No APK was produced. Removed only the two incomplete installer
+  directories created by this attempt, after checking timestamps, contents,
+  resolved SDK paths and absence of a completed NDK `source.properties` file.
+  This recovered about 2.3 GB. Do not retry NDK installation with this little
+  free space; provide substantially more disk headroom first.
+- Flutter doctor found no Android device, reported Android license status
+  unknown, and reported missing Visual Studio (Windows desktop is not a target).
+- Chrome-platform widget tests timed out after 180 seconds both during the
+  full-disk condition and on one retry after cleanup. Browser-runtime testing
+  has not passed. A 60-second verbose diagnostic reached Chrome launch and test
+  suite startup, then timed out. An isolated plain-widget probe that imports
+  neither the app nor Riverpod also timed out before its test body. The probe
+  was removed after checking that its contents were unchanged. This narrows the
+  investigation to browser-test harness readiness; it does not establish a
+  browser-runtime pass or justify speculative app changes. Evidence includes
+  `chrome-diagnostic.json` and `minimal-chrome-diagnostic.json`.
+- Firebase packages, backend configuration, database schema/codegen, UI theme and
+  routing remain deferred. iOS currently targets 13; Firebase's documented
+  minimum of 15 is a compatibility decision that has not been applied.
+- Computer-use fallback for source recovery was attempted, but app approval timed
+  out. No project specifications were read through native app UI and no browser
+  changes were made. A request for the missing specification paths is pending.
+
+The entire DEV-003 milestone is not complete. `docs/ROADMAP.md` records confirmed
+milestones and the missing requirements without inventing product behavior.
+Checkpoint branch: `codex/dev003-dependencies`. No Android retries should be made
+without a fresh resource check. A direct check after the browser tests exited
+showed about 8.1 GB free; earlier low-space readings overlapped active processes.
+
 ## Verified checkpoint
 
 - Base: `16d2b71`; task branch: `codex/dev002-architecture`.

@@ -4,7 +4,7 @@ Complete rewrite of the gym workout tracking application. Android-first with Web
 
 ## Project Status
 
-**DEV-002 foundation pilot implemented** — App composition extracted and feature-first architecture documented. Full specification compliance remains pending recovery of the referenced architecture and UX documents.
+**DEV-003 in progress** — Architecture foundation, dependency setup and Riverpod bootstrap implemented. Full specification compliance remains pending recovery of the referenced architecture and UX documents.
 
 ## Platform Support
 
@@ -15,9 +15,9 @@ Complete rewrite of the gym workout tracking application. Android-first with Web
 ## Technical Stack
 
 - **Framework:** Flutter 3.44.6 / Dart 3.12.2
-- **State Management:** Riverpod (TBD in milestone)
-- **Navigation:** GoRouter (TBD in milestone)
-- **Local Storage:** Drift/SQLite (TBD in milestone)
+- **State Management:** Riverpod (root scope configured)
+- **Navigation:** GoRouter (installed; configuration pending)
+- **Local Storage:** Drift/SQLite (installed; configuration pending)
 - **Backend:** Firebase Authentication + Firestore (TBD in milestone)
 - **Architecture:** Feature-first layered
 
@@ -76,6 +76,7 @@ Feature-first structure with clear separation of concerns. Full architecture doc
 
 - [x] DEV-001: Initialize fresh Flutter project
 - [x] DEV-002: App composition and feature-first architecture foundation
+- [ ] DEV-003: Dependencies and platform validation (dependency foundation implemented)
 - [ ] Additional milestones TBD
 
 ## License

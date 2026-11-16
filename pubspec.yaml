@@ -35,6 +35,19 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # State management
+  flutter_riverpod: ^3.5.0
+
+  # Navigation
+  go_router: ^18.1.4
+
+  # Local database
+  drift: ^2.35.4
+  drift_flutter: ^0.3.1
+
+  # Platform utilities
+  path_provider: ^2.1.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

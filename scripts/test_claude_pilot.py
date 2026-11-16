@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 
-from claude_pilot import redact, run_process, validate_proposal, validate_response
+from claude_pilot import load_task, redact, run_process, validate_proposal, validate_response
 
 
 class PilotTests(unittest.TestCase):
@@ -68,6 +68,31 @@ class PilotTests(unittest.TestCase):
                                        "result": "arbitrary prose " + json.dumps(proposal)})
         with self.assertRaises(ValueError):
             validate_proposal(result)
+
+    def test_task_rejects_outside_and_configuration_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            task = Path(directory) / "task.json"
+            for name in ("../outside.dart", "C:outside.dart", ".git/settings.yaml", ".env", "scripts/tool.py"):
+                task.write_text(json.dumps({"input_files": [name], "output_files": [], "prompt": "test"}), encoding="utf-8")
+                with self.assertRaises(ValueError, msg=name):
+                    load_task(task)
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows job object lifecycle")
+    def test_supervisor_exit_kills_worker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / "orphan.txt"
+            worker = f"import time; from pathlib import Path; time.sleep(2); Path({str(marker)!r}).touch()"
+            supervisor = (
+                "import os,sys,threading; "
+                f"sys.path.insert(0,{str(Path(__file__).parent.resolve())!r}); "
+                "from claude_pilot import run_process; "
+                "threading.Timer(0.7, lambda: os._exit(9)).start(); "
+                f"run_process([sys.executable,'-c',{worker!r}],{str(Path.cwd())!r},30)"
+            )
+            result = subprocess.run([sys.executable, "-c", supervisor], capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 9)
+            subprocess.run([sys.executable, "-c", "import time; time.sleep(2.5)"], check=True)
+            self.assertFalse(marker.exists(), "Worker survived supervisor exit")
 
 
 if __name__ == "__main__":

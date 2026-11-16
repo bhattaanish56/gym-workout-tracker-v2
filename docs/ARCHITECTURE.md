@@ -97,9 +97,9 @@ Example: `lib/features/exercises/domain/models/exercise.dart`
 
 ## Technology Stack (Planned)
 
-- **State Management:** Riverpod (not yet configured)
-- **Navigation:** GoRouter (not yet configured)
-- **Local Database:** Drift/SQLite (not yet configured)
+- **State Management:** Riverpod installed with root ProviderScope; feature providers pending
+- **Navigation:** GoRouter installed; route configuration pending
+- **Local Database:** Drift/SQLite packages installed; database configuration pending
 - **Backend:** Firebase Auth + Firestore (not yet configured)
 - **Platforms:** Android (primary), Web (responsive), iOS (scaffolded, requires macOS for builds)
 
