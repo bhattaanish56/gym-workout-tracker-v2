@@ -100,8 +100,8 @@ Example: `lib/features/exercises/domain/models/exercise.dart`
 - **State Management:** Riverpod installed with root ProviderScope; feature providers pending
 - **Navigation:** GoRouter installed; route configuration pending
 - **Local Database:** Drift/SQLite packages installed; database configuration pending
-- **Backend:** Firebase Auth + Firestore (not yet configured)
-- **Platforms:** Android (primary), Web (responsive), iOS (scaffolded, requires macOS for builds)
+- **Backend:** Firebase Core, Auth and Firestore packages installed; backend not configured
+- **Platforms:** Android (primary), Web (responsive), iOS 15+ (scaffolded, requires macOS for builds)
 
 ## Core Concepts
 

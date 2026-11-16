@@ -158,6 +158,8 @@ def validate_proposal(result, allowed=None):
     # only this explicit wrapper; never guess a JSON span from arbitrary prose.
     if payload.startswith("<thinking>") and "</thinking>" in payload:
         payload = payload.split("</thinking>", 1)[1].strip()
+    if payload.startswith("```json\n") and payload.endswith("```"):
+        payload = payload[len("```json\n"):-3].strip()
     proposal = json.loads(payload)
     allowed = set(allowed or {"lib/main.dart", "lib/app/app.dart", "docs/ARCHITECTURE.md"})
     files = proposal["files"]

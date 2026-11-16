@@ -2,6 +2,34 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## DEV-003b dependency continuation
+
+- Claude proposed firebase_core 5.2.0, firebase_auth 7.1.0 and cloud_firestore
+  7.2.0 declarations. They resolved successfully with the pinned Flutter/Dart
+  toolchain. The supervisor reviewed the proposal and corrected unsupported
+  platform claims in its draft documentation before application.
+- All three iOS project deployment settings were aligned from the generated
+  13.0 default to 15.0, matching the documented Firebase minimum. Native iOS
+  compilation remains unverified and requires macOS/Xcode.
+- Formatting, analysis, one VM widget test and the Web build passed after the
+  actual changes. Evidence: `build/unattended-pilot/dev003b-actual-validation/`.
+  An earlier validation ran against unchanged DEV-003a source because a proposal
+  formatting assertion stopped application; that older report is explicitly
+  labeled as inapplicable to the Firebase changes.
+- The parser now accepts a complete JSON code fence with no surrounding prose,
+  including the already supported provider wrapper. Arbitrary prose remains
+  rejected. All nine controller tests passed after this change.
+- Source sharing of the new dependency document was rejected by automatic
+  approval review. The safer request excluded that document and transmitted
+  only explicitly approved pubspec/architecture files; documentation was
+  corrected locally from the resulting proposal.
+- No Firebase initialization call, project configuration, Google Services file,
+  authentication flow, database operation, cloud request, deployment or production
+  action was added. Dart package resolution is not native-platform validation.
+- Full DEV-003 completion remains blocked on native platform validation. The
+  missing architecture/UX source documents still prevent specification-driven
+  screen and feature implementation. No persistent dispatcher is enabled.
+
 ## DEV-003a continuation
 
 Implemented after the user instructed continuous development beyond DEV-002:

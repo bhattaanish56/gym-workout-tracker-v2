@@ -60,7 +60,10 @@ class PilotTests(unittest.TestCase):
     def test_proposal_accepts_only_explicit_provider_wrapper(self):
         proposal = {"files": {name: "content" for name in (
             "lib/main.dart", "lib/app/app.dart", "docs/ARCHITECTURE.md")}}
-        for payload in (json.dumps(proposal), "<thinking>provider prefix</thinking>\n" + json.dumps(proposal)):
+        for payload in (json.dumps(proposal),
+                        "<thinking>provider prefix</thinking>\n" + json.dumps(proposal),
+                        "```json\n" + json.dumps(proposal) + "\n```",
+                        "<thinking>provider prefix</thinking>\n```json\n" + json.dumps(proposal) + "\n```"):
             result = {"timed_out": False, "exit_code": 0, "stdout": json.dumps({
                 "subtype": "success", "is_error": False, "result": payload})}
             self.assertEqual(validate_proposal(result), proposal)

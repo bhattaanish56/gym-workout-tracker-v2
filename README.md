@@ -18,7 +18,7 @@ Complete rewrite of the gym workout tracking application. Android-first with Web
 - **State Management:** Riverpod (root scope configured)
 - **Navigation:** GoRouter (installed; configuration pending)
 - **Local Storage:** Drift/SQLite (installed; configuration pending)
-- **Backend:** Firebase Authentication + Firestore (TBD in milestone)
+- **Backend:** Firebase Core, Authentication and Firestore (packages installed; backend configuration pending)
 - **Architecture:** Feature-first layered
 
 ## Planned Features
