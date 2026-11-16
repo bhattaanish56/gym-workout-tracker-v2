@@ -12,7 +12,7 @@ unavailable full architecture and UX specifications.
 | DEV-002 | Feature-first layering and app composition | Foundation pilot verified at `8ab2a52`; full-spec compliance unverified |
 | DEV-003a | Riverpod bootstrap and planned routing/storage dependencies | Implemented; resolver, analysis, VM widget test and Web build passed |
 | DEV-003b | Remaining dependencies and platform compatibility | Firebase packages resolved; iOS project target aligned to 15; backend remains uninitialized and native validation incomplete |
-| DEV-004 | Theme and UI foundation | Needs finalized UX specification |
+| DEV-004 | Theme and UI foundation | Provisional dark-first themes verified; finalized UX specification still needed |
 | DEV-005 | Navigation and app shell | Needs confirmed UX routes, tab layout and authentication flow |
 | DEV-006 | Testing and CI | Local independent checks exist; remote CI has not been established |
 

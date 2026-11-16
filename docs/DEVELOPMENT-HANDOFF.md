@@ -2,6 +2,26 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## DEV-004a provisional theme foundation
+
+- Claude produced the Material 3 light/dark theme library, widget coverage and
+  draft documentation. The supervisor integrated the API into MyApp, corrected
+  contrast tests to compare actual foreground/background roles, and replaced
+  deprecated or ineffective text-scale fixtures with asserted platform scaling.
+- Default mode is dark; explicit light and system modes are injectable through
+  MyApp's constructor. There is no preference UI/storage. Existing seed, icons,
+  typography and counter layout/behavior remain the provisional basis.
+- Formatting, analysis, all eight widget tests and the Web build passed under
+  the active 2 GB disk reserve. Tests cover real bootstrap/counter interaction,
+  default/explicit/system modes, semantic contrast and operable 375x812/812x375
+  layouts at an asserted 2x text scale. Evidence: `dev004a-validation/report.json`
+  under `build/unattended-pilot/`.
+- The Flutter stack guidance from the UI/UX skill was consulted. This is an
+  isolated foundation based on the confirmed dark-first direction; finalized UX,
+  manual visual checks, browser runtime and device verification remain pending.
+- A final incremental Android attempt may use the now-installed toolchain and
+  recovered space, but must keep the active 2 GB reserve and an explicit timeout.
+
 ## Resource-guarded Android and browser investigation
 
 - Added an optional free-space reserve to the process runner. It checks before

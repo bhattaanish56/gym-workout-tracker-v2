@@ -6,7 +6,7 @@ Gym Workout Tracker V2 uses feature-first layered architecture with clear separa
 
 ## Directory Structure
 
-Only `lib/main.dart` and `lib/app/app.dart` currently exist below. All other
+`lib/main.dart`, `lib/app/app.dart` and `lib/app/theme.dart` currently exist below. Other
 folders and files in these diagrams are planned; no empty placeholders are created.
 The `ai_assistant` feature is future-only and is not implemented in this milestone.
 
@@ -17,7 +17,7 @@ lib/
 ├── app/                         # App-level composition and configuration
 │   ├── app.dart                # Root widget (current)
 │   ├── router.dart             # GoRouter navigation (planned)
-│   ├── theme.dart              # Design system (planned)
+│   ├── theme.dart              # Provisional light/dark foundation (current)
 │   └── providers.dart          # Root providers, dependency injection (planned)
 ├── core/                        # Shared domain and infrastructure
 │   ├── domain/                 # Shared domain primitives, errors, value objects

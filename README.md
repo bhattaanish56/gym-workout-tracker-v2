@@ -4,7 +4,7 @@ Complete rewrite of the gym workout tracking application. Android-first with Web
 
 ## Project Status
 
-**DEV-003 in progress** — Architecture foundation, dependency setup and Riverpod bootstrap implemented. Full specification compliance remains pending recovery of the referenced architecture and UX documents.
+**Foundation development in progress** — Architecture, dependency setup, Riverpod bootstrap and a provisional dark-first theme are implemented. Full specification compliance remains pending recovery of the referenced architecture and UX documents.
 
 ## Platform Support
 
@@ -77,6 +77,7 @@ Feature-first structure with clear separation of concerns. Full architecture doc
 - [x] DEV-001: Initialize fresh Flutter project
 - [x] DEV-002: App composition and feature-first architecture foundation
 - [ ] DEV-003: Dependencies and platform validation (dependency foundation implemented)
+- [ ] DEV-004: Theme and UI foundation (provisional light/dark themes verified)
 - [ ] Additional milestones TBD
 
 ## License
