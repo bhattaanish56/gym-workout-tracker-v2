@@ -1,168 +1,184 @@
 # Architecture Overview
 
-## Project Structure
+Gym Workout Tracker V2 uses feature-first layered architecture with clear separation of concerns.
 
-Gym Workout Tracker V2 uses **feature-first layered architecture** with clear separation of concerns.
+**Note:** Full compliance with GWT-V2-ARCH-001, GWT-V2-DEV-001, and final UX specifications remains unverified as complete documents are unavailable.
 
-### Core Principles
+## Directory Structure
 
-1. **Feature-First Organization:** Code organized by feature/domain, not technical layer
-2. **Separation of Concerns:** Clear boundaries between UI, business logic, and data
-3. **Dependency Inversion:** Core logic independent of external frameworks
-4. **Testability:** Each layer independently testable
+Only `lib/main.dart` and `lib/app/app.dart` currently exist below. All other
+folders and files in these diagrams are planned; no empty placeholders are created.
+The `ai_assistant` feature is future-only and is not implemented in this milestone.
 
-### Planned Directory Structure
 
 ```
 lib/
-├── main.dart                    # Application entry point
-├── app/                         # App-level configuration
-│   ├── router.dart             # GoRouter navigation (TBD)
-│   ├── theme.dart              # Dark-first design system (TBD)
-│   └── providers.dart          # Root Riverpod providers (TBD)
+├── main.dart                    # Entry point
+├── app/                         # App-level composition and configuration
+│   ├── app.dart                # Root widget (current)
+│   ├── router.dart             # GoRouter navigation (planned)
+│   ├── theme.dart              # Design system (planned)
+│   └── providers.dart          # Root providers, dependency injection (planned)
+├── core/                        # Shared domain and infrastructure
+│   ├── domain/                 # Shared domain primitives, errors, value objects
+│   ├── contracts/              # Repository interfaces, service contracts
+│   ├── utils/                  # Pure Dart utilities
+│   └── adapters/               # Platform adapters (storage, network, auth clients)
 ├── features/                    # Feature modules
-│   ├── home/                   # Dashboard feature
-│   ├── workouts/               # Workout logging feature
-│   ├── exercises/              # Exercise catalog feature
-│   ├── progress/               # Progress tracking feature
-│   └── nutrition/              # Nutrition tracking feature
-├── shared/                      # Shared utilities
-│   ├── widgets/                # Reusable UI components
-│   ├── models/                 # Shared data models
-│   └── utils/                  # Helper functions
-└── core/                        # Core infrastructure
-    ├── database/               # Drift/SQLite setup (TBD)
-    ├── auth/                   # Firebase Auth (TBD)
-    └── api/                    # Firestore integration (TBD)
+│   ├── authentication/
+│   ├── onboarding/
+│   ├── home/
+│   ├── programs/               # Program templates (replaces generic workouts)
+│   ├── sessions/               # Workout session logging
+│   ├── exercises/              # Exercise catalog and definitions
+│   ├── progress/               # Progress tracking and analytics
+│   ├── nutrition/              # Nutrition tracking
+│   ├── profile/                # User profile management
+│   └── account_data/           # Account settings and data management
+└── shared/                      # Reusable presentation components
+    ├── widgets/                # Cross-feature UI components
+    ├── theme/                  # Theme extensions, custom styles
+    └── utils/                  # UI helpers, formatters
 ```
 
 ### Feature Module Structure
 
-Each feature follows consistent internal organization:
+Each feature follows internal layering:
 
 ```
 feature_name/
 ├── presentation/               # UI layer
 │   ├── screens/               # Screen widgets
 │   ├── widgets/               # Feature-specific widgets
-│   └── providers/             # Riverpod state providers
-├── domain/                     # Business logic
-│   ├── models/                # Domain entities
-│   ├── repositories/          # Abstract repository interfaces
-│   └── usecases/              # Business operations (optional)
+│   └── providers/             # Riverpod state management (planned)
+├── application/                # Application services (optional, for complex features)
+│   └── services/              # Orchestration, use cases
+├── domain/                     # Business logic (pure Dart)
+│   ├── models/                # Domain entities, value objects
+│   └── repositories/          # Abstract repository contracts
 └── data/                       # Data layer
-    ├── models/                # Data transfer objects
+    ├── models/                # DTOs, serialization models
     ├── repositories/          # Repository implementations
-    └── datasources/           # Local/remote data sources
+    └── datasources/           # Local (Drift) and remote (Firebase) data sources
 ```
 
-## Technology Stack
+Example: `lib/features/exercises/domain/models/exercise.dart`
 
-### State Management: Riverpod
+## Dependency Rules
 
-- **Provider types:** StateNotifierProvider, FutureProvider, StreamProvider
-- **State holders:** StateNotifier, AsyncValue
-- **Scope:** Feature-level providers, app-level root providers
+**Inward dependencies only:**
+- presentation → application → domain ← data
+- features/ → core/ (allowed)
+- core/ → features/ (forbidden)
+- shared/ → core/ (allowed for utilities)
+- feature A → feature B (avoid; use core/ for shared domain)
 
-### Navigation: GoRouter
+**Domain layer:**
+- Pure Dart, no Flutter or external framework dependencies
+- Defines repository contracts (interfaces)
+- Enforces business rules and invariants
 
-- **Routes:** Declarative route definitions
-- **Deep linking:** Web URL support
-- **Guards:** Authentication route protection
+**Data layer:**
+- Implements repository contracts
+- Uses external libraries (Drift, Firebase) and core adapters
+- Handles serialization, caching, network calls
 
-### Local Persistence: Drift/SQLite
+**Presentation layer:**
+- Reads from repositories via providers
+- Triggers actions, displays results
+- Must NOT perform database writes directly
+- Must NOT perform authoritative fitness calculations (e.g., 1RM formulas, calorie burns)
+  - Domain defines authoritative formulas; application orchestrates their use
+  - UI displays computed results
 
-- **Database:** Type-safe SQL with Drift
-- **Migrations:** Version-controlled schema changes
-- **Queries:** Reactive streams, complex joins
+**Composition:**
+- App-level (lib/app/) imports data implementations to inject into contracts
+- Example: `final exerciseRepo = DriftExerciseRepository(db);`
 
-### Backend: Firebase
+## Technology Stack (Planned)
 
-- **Authentication:** Email/password, social providers
-- **Firestore:** Cloud data sync, offline support
-- **Structure:** User-scoped collections, security rules
+- **State Management:** Riverpod (not yet configured)
+- **Navigation:** GoRouter (not yet configured)
+- **Local Database:** Drift/SQLite (not yet configured)
+- **Backend:** Firebase Auth + Firestore (not yet configured)
+- **Platforms:** Android (primary), Web (responsive), iOS (scaffolded, requires macOS for builds)
 
-## Design System
+## Core Concepts
 
-### Theme
+### Repository Pattern
+- Contracts in domain layer define operations
+- Data layer provides implementations
+- Presentation consumes via providers
 
-- **Mode:** Dark-first design
-- **Colors:** Material 3 dynamic color scheme
-- **Typography:** Platform-appropriate font scales
-- **Components:** Custom theme extensions
+### Error Handling
+- Domain errors: sealed classes or enums
+- Result types for operations that can fail
+- Propagate to presentation for user-facing messages
+- Strategy for specific error types (network, validation, auth) deferred
 
-### Responsive Design
+### Platform Adapters
+- Abstract platform-specific functionality in core/adapters/
+- Implementations injected at app level
+- Examples: storage client, auth client, network client
 
-- **Breakpoints:** Mobile-first, adaptive layouts
-- **Android:** Primary target, optimized experience
-- **Web:** Responsive grid, desktop-friendly navigation
-- **iOS:** Platform conventions (future)
+### Local Persistence vs Cloud Sync
+- Local-first: Drift as source of truth
+- Cloud sync: background reconciliation strategy deferred
+- Conflict resolution algorithm: deferred
+- Offline support: deferred
 
 ## Testing Strategy
 
-### Unit Tests
+```
+test/                           # Mirrors lib/ structure
+├── features/
+│   └── exercises/
+│       ├── domain/            # Unit tests for models, business logic
+│       ├── data/              # Repository implementation tests
+│       └── presentation/      # Widget tests for screens and widgets
+├── core/                       # Core utilities and contracts tests
+└── shared/                     # Shared widget tests
 
-- Domain models and business logic
-- Repository implementations
-- Utility functions
+integration_test/               # End-to-end tests (reserved for later)
+```
 
-### Widget Tests
+**Test organization:**
+- Unit tests: domain models, business logic, pure functions
+- Widget tests: individual screens, widgets, user interactions
+- Integration tests: full user flows, database operations, navigation (future)
 
-- Individual widgets and screens
-- User interactions
-- State transitions
+## Naming Conventions
 
-### Integration Tests
+- Files: snake_case (e.g., `exercise_repository.dart`)
+- Classes: PascalCase (e.g., `ExerciseRepository`)
+- Variables/functions: camelCase (e.g., `fetchExercises`)
+- Private members: leading underscore (e.g., `_counter`)
+- Feature prefixes for clarity where needed (e.g., `ExerciseListScreen`)
 
-- End-to-end user flows
-- Database operations
-- Navigation paths
+## Unspecified Decisions (Deferred)
 
-## Development Phases
+- Specific authentication providers (email/password, Google, Apple)
+- Analytics integration and event tracking
+- Encryption strategy for sensitive data
+- GDPR compliance mechanisms
+- Notification system and scheduling
+- Cloud sync schedule and retry logic
+- Firestore schema and security rules
+- Event bus or message passing between features
+- Specific metrics tracked or coverage targets
 
-### Phase 1: Foundation (Current)
+## Development Status
 
-- [x] Fresh Flutter project
-- [ ] Core app structure
-- [ ] Design system
-- [ ] Navigation setup
-
-### Phase 2: Features (TBD)
-
-- [ ] Authentication
-- [ ] Exercise catalog
-- [ ] Workout logging
-- [ ] Progress tracking
-- [ ] Nutrition tracking
-
-### Phase 3: Enhancement (TBD)
-
-- [ ] Offline support
-- [ ] Cloud sync
-- [ ] Analytics
-- [ ] Notifications
-
-## Code Conventions
-
-- **Formatting:** `dart format` default rules
-- **Linting:** `analysis_options.yaml` strict configuration
-- **Naming:** Descriptive, feature-prefixed for clarity
-- **Documentation:** Public APIs documented, complex logic commented
-
-## Build Variants
-
-- **Debug:** Development, hot reload enabled
-- **Profile:** Performance testing
-- **Release:** Production builds, obfuscated
-
-## CI/CD (Future)
-
-- Automated testing on PR
-- Static analysis enforcement
-- Build verification
-- Deployment automation
+**Current Phase:** Foundation
+- [x] Fresh Flutter project created
+- [x] Initial architecture defined
+- [x] App-level structure established (lib/app/app.dart)
+- [ ] Dependencies added (Riverpod, GoRouter, Drift, Firebase)
+- [ ] Design system implemented
+- [ ] Navigation configured
+- [ ] Feature development
 
 ---
 
-**Last Updated:** 2026-11-16  
-**Status:** Foundation phase, architecture defined
+**Last Updated:** 2026-11-17
+**Document Version:** DEV-002

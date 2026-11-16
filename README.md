@@ -4,7 +4,7 @@ Complete rewrite of the gym workout tracking application. Android-first with Web
 
 ## Project Status
 
-**DEV-001 Complete** — Fresh Flutter project initialized.
+**DEV-002 foundation pilot implemented** — App composition extracted and feature-first architecture documented. Full specification compliance remains pending recovery of the referenced architecture and UX documents.
 
 ## Platform Support
 
@@ -75,7 +75,7 @@ Feature-first structure with clear separation of concerns. Full architecture doc
 ## Development Milestones
 
 - [x] DEV-001: Initialize fresh Flutter project
-- [ ] DEV-002: TBD
+- [x] DEV-002: App composition and feature-first architecture foundation
 - [ ] Additional milestones TBD
 
 ## License

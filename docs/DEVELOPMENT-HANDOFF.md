@@ -1,0 +1,76 @@
+# Development handoff
+
+Updated: 2026-11-17 (Asia/Katmandu).
+
+## Verified checkpoint
+
+- Base: `16d2b71`; task branch: `codex/dev002-architecture`.
+- Claude Code through the user's existing localhost 9router connection returned a
+  DEV-002 implementation proposal. The first proposal failed independent review;
+  one correction request produced the accepted proposal.
+- The supervisor applied the reviewed changes. Claude had no tools or direct
+  filesystem access during these requests.
+- `lib/main.dart` now starts the app and re-exports its existing public widgets.
+- `lib/app/app.dart` contains the original starter widgets. Their class bodies
+  were compared with the base revision and preserved without behavioral changes.
+- `docs/ARCHITECTURE.md` defines feature boundaries, layers, naming, contracts,
+  testing conventions, and planned storage/platform separation.
+- No dependencies, platform identifiers, navigation, theme, or Firebase setup changed.
+
+## Validation
+
+All commands below passed after the app changes:
+
+- `dart format --output=none --set-exit-if-changed lib test`: no changes.
+- `flutter analyze --no-pub`: no issues.
+- `flutter test --no-pub`: one widget test passed.
+- `flutter build web --no-pub`: Web build and Wasm dry run succeeded.
+- `python -m unittest discover -s scripts -p test_claude_pilot.py -v`:
+  seven controller tests passed, including process-tree termination on timeout,
+  failed-command handling, response validation, path restrictions and redaction.
+- `git diff --check`: passed after documentation whitespace cleanup.
+
+No Android or iOS build, device launch, or visual responsive check was performed.
+The UI remains the starter counter screen; workout functionality is not implemented.
+
+## Pilot operation and evidence
+
+- `scripts/claude_pilot.py --run-claude` sends one tool-free connection request.
+- `scripts/claude_pilot.py --propose-dev002` sends the fixed DEV-002 context and
+  saves a three-file proposal for review; it never automatically applies files.
+- `scripts/claude_pilot.py --verify-flutter` independently runs analysis and tests.
+- The runner uses one lock, per-command timeouts, a Windows job object for process
+  cleanup, a persisted per-run report, and no automatic repair loop.
+- Existing API routing values are passed only to the child environment. Settings,
+  hooks, plugins, MCP tools, shell tools, and file-editing tools are disabled for
+  Claude requests. No credentials are embedded in source or deliberately logged.
+- CLI budget stops are estimates, not guarantees of provider billing limits.
+- Private logs and proposals are under ignored `build/unattended-pilot/`.
+- Accepted proposal: `20261116T181808.112879Z/proposal.json` in that directory.
+- Independent Flutter evidence: `dev002-validation/report.json` in that directory.
+- Initial sandbox failures are retained. Local proxy access and Flutter checks
+  required approved execution outside the restricted sandbox.
+
+## Authorization and remaining work
+
+The user authorized project development, source transmission through their
+configured 9router provider, branches, repository creation/connection, commits,
+and pushes. Preserve unrelated changes and stop for destructive operations,
+new paid services, credential/account changes, public releases, production
+deployments, or production Firebase changes.
+
+No Git remote is configured. No push, repository creation, deployment, production
+Firebase action, recurring schedule, or persistent overnight dispatcher was run.
+This checkpoint verifies a supervised implementation/review/test cycle only.
+
+Full GWT-V2-ARCH-001, GWT-V2-DEV-001 and finalized UX documents remain unavailable.
+Recover them before claiming full specification compliance or inventing feature
+requirements. The next planned milestone is DEV-003: dependencies and platform
+validation; its detailed task definition is still pending. Later milestones are
+DEV-004 theme, DEV-005 navigation, and DEV-006 testing/CI.
+
+A provider reset can be handled while the supervisor session remains active.
+Self-restarting after Codex stops or after host sleep requires a separately
+configured runner and has not been established. Second Brain was not updated:
+its directory is outside the permitted write roots; this project-local file
+holds the verified handoff.
