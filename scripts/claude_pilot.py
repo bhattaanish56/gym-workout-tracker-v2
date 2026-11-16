@@ -21,6 +21,10 @@ class ProcessCleanupError(RuntimeError):
     pass
 
 
+class ResourceLimitReached(RuntimeError):
+    pass
+
+
 class JobLimits(ctypes.Structure):
     _fields_ = [("process_time", ctypes.c_longlong), ("job_time", ctypes.c_longlong),
                 ("flags", ctypes.c_uint32), ("min_working_set", ctypes.c_size_t),
@@ -35,9 +39,11 @@ class ExtendedJobLimits(ctypes.Structure):
                 ("peak_process_memory", ctypes.c_size_t), ("peak_job_memory", ctypes.c_size_t)]
 
 
-def run_process(command, cwd, timeout, env=None, input_text=None):
+def run_process(command, cwd, timeout, env=None, input_text=None, min_free_bytes=None):
     """Bound each command; kill only this invocation's process tree on timeout."""
     started = time.monotonic()
+    if min_free_bytes is not None and shutil.disk_usage(cwd).free < min_free_bytes:
+        raise ResourceLimitReached("Insufficient free disk space before process launch")
     process = subprocess.Popen(
         command, cwd=cwd, env=env, stdin=subprocess.PIPE,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -70,10 +76,27 @@ def run_process(command, cwd, timeout, env=None, input_text=None):
                 kernel.CloseHandle(job)
             raise ProcessCleanupError("Cannot establish Windows process-tree containment")
     timed_out = False
+    resource_limited = False
     try:
-        stdout, stderr = process.communicate(input_text, timeout=timeout)
-    except (subprocess.TimeoutExpired, KeyboardInterrupt):
-        timed_out = True
+        if min_free_bytes is None:
+            stdout, stderr = process.communicate(input_text, timeout=timeout)
+        else:
+            deadline = started + timeout
+            pending_input = input_text
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise subprocess.TimeoutExpired(command, timeout)
+                try:
+                    stdout, stderr = process.communicate(pending_input, timeout=min(0.5, remaining))
+                    break
+                except subprocess.TimeoutExpired:
+                    pending_input = None
+                    if shutil.disk_usage(cwd).free < min_free_bytes:
+                        raise ResourceLimitReached("Free disk reserve reached during execution")
+    except (subprocess.TimeoutExpired, KeyboardInterrupt, ResourceLimitReached) as error:
+        resource_limited = isinstance(error, ResourceLimitReached)
+        timed_out = not resource_limited
         try:
             if os.name == "nt":
                 if not kernel.TerminateJobObject(job, 124):
@@ -91,6 +114,7 @@ def run_process(command, cwd, timeout, env=None, input_text=None):
             kernel.CloseHandle(job)
     return {
         "exit_code": process.returncode, "timed_out": timed_out,
+        "resource_limited": resource_limited,
         "elapsed_seconds": round(time.monotonic() - started, 2),
         "stdout": stdout, "stderr": stderr,
     }
@@ -161,7 +185,7 @@ def validate_proposal(result, allowed=None):
     if payload.startswith("```json\n") and payload.endswith("```"):
         payload = payload[len("```json\n"):-3].strip()
     proposal = json.loads(payload)
-    allowed = set(allowed or {"lib/main.dart", "lib/app/app.dart", "docs/ARCHITECTURE.md"})
+    allowed = set({"lib/main.dart", "lib/app/app.dart", "docs/ARCHITECTURE.md"} if allowed is None else allowed)
     files = proposal["files"]
     if (not isinstance(files, dict) or set(files) != allowed
             or any(not isinstance(content, str) or len(content) > 100000 for content in files.values())):

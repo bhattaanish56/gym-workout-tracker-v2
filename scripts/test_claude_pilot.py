@@ -6,8 +6,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
-from claude_pilot import load_task, redact, run_process, validate_proposal, validate_response
+from claude_pilot import ResourceLimitReached, load_task, redact, run_process, validate_proposal, validate_response
 
 
 class PilotTests(unittest.TestCase):
@@ -20,6 +22,19 @@ class PilotTests(unittest.TestCase):
     def test_failed_command(self):
         result = run_process([sys.executable, "-c", "raise SystemExit(7)"], Path.cwd(), 5)
         self.assertEqual(result["exit_code"], 7)
+
+    def test_disk_guard_prevents_launch(self):
+        with patch('claude_pilot.shutil.disk_usage', return_value=SimpleNamespace(free=0)), patch('claude_pilot.subprocess.Popen') as launch:
+            with self.assertRaises(ResourceLimitReached):
+                run_process([sys.executable, '-c', 'pass'], Path.cwd(), 5, min_free_bytes=100)
+            launch.assert_not_called()
+
+    def test_disk_guard_terminates_running_worker(self):
+        with patch('claude_pilot.shutil.disk_usage', side_effect=[SimpleNamespace(free=1000), SimpleNamespace(free=0)]):
+            result = run_process([sys.executable, '-c', 'import time; time.sleep(30)'], Path.cwd(), 5, min_free_bytes=100)
+        self.assertTrue(result['resource_limited'])
+        self.assertFalse(result['timed_out'])
+        self.assertNotEqual(result['exit_code'], 0)
 
     def test_timeout_kills_spawned_child(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -67,6 +82,8 @@ class PilotTests(unittest.TestCase):
             result = {"timed_out": False, "exit_code": 0, "stdout": json.dumps({
                 "subtype": "success", "is_error": False, "result": payload})}
             self.assertEqual(validate_proposal(result), proposal)
+            with self.assertRaises(ValueError):
+                validate_proposal(result, [])
         result["stdout"] = json.dumps({"subtype": "success", "is_error": False,
                                        "result": "arbitrary prose " + json.dumps(proposal)})
         with self.assertRaises(ValueError):

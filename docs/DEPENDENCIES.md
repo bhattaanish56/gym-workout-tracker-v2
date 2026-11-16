@@ -85,7 +85,7 @@ Gym Workout Tracker V2 dependency manifest for DEV-003 milestone.
 
 ## Known Build Blockers
 
-- **Android NDK:** Download blocked by insufficient free disk space
+- **Android build:** Required SDK components installed; guarded build stopped at its free-space reserve
 - **iOS native builds:** Require macOS; untested from Windows
 - **Web database persistence:** Unverified in production browser environments
 

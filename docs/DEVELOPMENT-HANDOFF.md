@@ -2,6 +2,36 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## Resource-guarded Android and browser investigation
+
+- Added an optional free-space reserve to the process runner. It checks before
+  launch and every 0.5 seconds while the child runs, and terminates the contained
+  process tree when the reserve is reached. Eleven tests passed, including
+  prevention of low-space launches and termination of a running worker.
+- A guarded Android retry installed NDK 28.2.13676358, Android platforms 34/35/36,
+  and CMake 3.22.1 successfully. The build then reached the 2 GB reserve and was
+  stopped by the guard; no successful APK build is claimed. Completed SDK
+  installations were preserved. Evidence: `android-guarded-retry/report.json`
+  under `build/unattended-pilot/`.
+- Applied reversible NTFS compression only to the newly installed, completed NDK
+  directory. Reparse points were refused. Hashes of source.properties and clang.exe
+  matched before/after. The command succeeded and recovered about 1.0 GB, raising
+  observed free space from about 1.97 GB to 3.00 GB. No deletion or CompactOS
+  setting was involved. Evidence: `build/unattended-pilot/ndk-compression.json`.
+- Ignored Android's generated `.kotlin` build cache; no cache contents were added
+  to Git. Empty allowed-output task scopes now reject proposals instead of
+  inheriting a default scope.
+- The supported Wasm browser test also compiled then stalled before executing
+  tests. A monitored standard Flutter browser-test command, without the custom
+  wrapper, stalled as well and was interrupted cleanly. The wrapper is therefore
+  not the sole cause. CanvasKit assets have plausible nonzero sizes; aggregate
+  available memory did not identify pressure at the inspected point.
+- Claude's generic diagnostic proposal remains private and unverified. Several
+  suggested flags/renderers were inapplicable; no browser downgrade, global
+  security change, or speculative app rewrite was performed.
+
+Further native retries require a fresh resource check and the same active reserve.
+
 ## DEV-003b dependency continuation
 
 - Claude proposed firebase_core 5.2.0, firebase_auth 7.1.0 and cloud_firestore

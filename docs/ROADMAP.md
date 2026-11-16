@@ -54,7 +54,7 @@ limits does not establish self-restart after Codex stops or the host sleeps.
 
 See DEVELOPMENT-HANDOFF.md for observed results and remaining limitations.
 
-Android build validation is currently blocked by disk headroom for the required
-NDK installation. Chrome-platform widget validation has timed out; a successful
+Android SDK components are now installed; build validation remains limited by
+disk headroom and an active free-space reserve. Chrome-platform widget validation has timed out; a successful
 Web build is not evidence of browser-runtime success. These do not block saving
 the independently verified dependency/bootstrap source checkpoint.
