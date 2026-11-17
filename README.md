@@ -86,6 +86,11 @@ It analyzes, tests and builds a web artifact; it does not deploy or run Claude.
 There is no recurring development worker. See `docs/DEVELOPMENT-HANDOFF.md` for
 verified results, platform limitations and the bounded implementation process.
 
+Current local checks: 20 widget tests passed on VM and headless Chrome, 12
+supervisor tests passed, analysis and Web build passed, and an ARM64 debug APK
+was built. Browser testing uses the isolated Windows tooling workaround described
+in `docs/QUALITY-CHECKS.md`. Device installation/runtime remains unverified.
+
 ## License
 
 TBD

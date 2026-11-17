@@ -8,7 +8,7 @@ Gym Workout Tracker V2 dependency manifest for DEV-003 milestone.
 - **Firebase packages (3):** RESOLVED (supervisor pub get completed)
 - **ProviderScope:** Configured in lib/main.dart
 - **Feature providers:** Not implemented
-- **GoRouter routes:** Not configured
+- **GoRouter routes:** Five-section provisional shell configured
 - **Drift database:** Not configured
 - **Firebase backend:** Not configured (Dart packages alone do not configure a backend)
 
@@ -28,7 +28,7 @@ Gym Workout Tracker V2 dependency manifest for DEV-003 milestone.
 ### Navigation
 - **go_router** ^18.1.4 (RESOLVED)
   - Declarative routing with deep linking support
-  - Route configuration pending
+  - Five stateful branches with adaptive navigation; authentication routing pending
   - https://pub.dev/packages/go_router
 
 ### Local Database
@@ -78,14 +78,14 @@ Gym Workout Tracker V2 dependency manifest for DEV-003 milestone.
 
 ## Platform Minimums
 
-- **Android:** Generated Flutter platform defaults; native build not yet verified
+- **Android:** Generated platform defaults; ARM64 debug packaging verified, device runtime pending
 - **iOS:** iOS 15+ (documented minimum; native build unverified on Windows dev environment)
-- **Web:** Build verified before this change; real browser runtime remains unverified
+- **Web:** Build and 20 headless Chrome widget tests verified (isolated Windows test-tool workaround)
 - **Windows desktop:** Not a project target
 
 ## Known Build Blockers
 
-- **Android build:** Required SDK components installed; guarded build stopped at its free-space reserve
+- **Android build:** ARM64 debug APK passed; full multi-ABI builds exceeded available disk budget
 - **iOS native builds:** Require macOS; untested from Windows
 - **Web database persistence:** Unverified in production browser environments
 
@@ -96,7 +96,7 @@ Gym Workout Tracker V2 dependency manifest for DEV-003 milestone.
 
 ## Notes
 
-- Firebase Dart packages resolved; native platform compilation remains unverified
+- Firebase Dart packages resolved and compiled into the ARM64 debug APK; initialization/auth/data operations remain unverified
 - No flutterfire configure execution performed
 - No Firebase project credentials, analytics, or production access configured
 - Full DEV-003 milestone completion not claimed
