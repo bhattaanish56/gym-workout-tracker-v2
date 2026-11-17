@@ -89,7 +89,7 @@ Public keys for test assertions:
 - All scrollable content uses SingleChildScrollView
 - Semantic heading hierarchy preserved
 - No hardcoded color values in screens
-- Theme from `lib/app/theme.dart` with deepPurple (#673AB7) seed
+- Theme from `lib/app/theme.dart` with approved V2 primary (#FF6B00)
 
 ## Known Limitations
 
