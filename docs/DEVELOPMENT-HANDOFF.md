@@ -2,6 +2,19 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## Additional source recovery
+
+Read-only filename checks found two older project proposals in Downloads:
+`Gym_Workout_Tracker_Proposal.docx` and `Gym_Workout_Tracker_Proposal1.docx`.
+Their extracted text describes Firebase accounts, exercise/sets/reps/notes logs,
+dated history, streaks, BMI, weight charts and a WGER library. Both explicitly
+exclude nutrition, which conflicts with the recovered V2 five-section plan.
+They are historical context, not GWT-V2-ARCH-001, GWT-V2-DEV-001 or finalized V2
+UX. No author/personal details were copied into this handoff. Related project ZIPs
+contain presentation PNGs, not source code or the missing specifications. None
+of these files were edited or sent to Claude/9router. Their requirements were
+not silently adopted into the V2 data model or business rules.
+
 ## DEV-006b browser gate resolved with isolated tooling workaround
 
 - Found the installed Flutter 3.44.6 test server's Windows URL/path mismatch:
