@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -372,5 +373,129 @@ void main() {
       closeTo(offset, 0.5),
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Home ListTile shortcuts navigate to correct sections', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(375, 812));
+    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpAndSettle();
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(app.MyApp)),
+      listen: false,
+    ).read(appRouterProvider);
+    final page = find.byKey(const Key('page-home'));
+    final shortcuts = [
+      ('Exercises', '/exercises', 2),
+      ('Progress', '/progress', 3),
+      ('Nutrition', '/nutrition', 4),
+    ];
+    for (final (title, route, index) in shortcuts) {
+      final tile = find.descendant(
+        of: page,
+        matching: find.widgetWithText(ListTile, title),
+      );
+      await tester.ensureVisible(tile);
+      await tester.pumpAndSettle();
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+      expect(find.byKey(Key('page-${route.substring(1)}')), findsOneWidget);
+      expect(
+        tester
+            .widget<NavigationBar>(find.byKey(const Key('nav-bar')))
+            .selectedIndex,
+        index,
+      );
+      expect(router.routeInformationProvider.value.uri.path, route);
+      await tester.tap(find.byKey(const Key('nav-home')));
+      await tester.pumpAndSettle();
+    }
+  });
+
+  testWidgets('Navigation persists across responsive breakpoints', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(375, 812));
+    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpAndSettle();
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(app.MyApp)),
+      listen: false,
+    ).read(appRouterProvider);
+    await tester.tap(find.byKey(const Key('nav-nutrition')));
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, '/nutrition');
+    tester.view.physicalSize = const Size(800, 600);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('nav-rail')), findsOneWidget);
+    expect(
+      tester.widget<NavigationRail>(find.byKey(const Key('nav-rail'))).extended,
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<NavigationRail>(find.byKey(const Key('nav-rail')))
+          .selectedIndex,
+      4,
+    );
+    expect(find.byKey(const Key('page-nutrition')), findsOneWidget);
+    expect(router.routeInformationProvider.value.uri.path, '/nutrition');
+    tester.view.physicalSize = const Size(1280, 800);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byKey(const Key('nav-rail'))).extended,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<NavigationRail>(find.byKey(const Key('nav-rail')))
+          .selectedIndex,
+      4,
+    );
+    expect(find.byKey(const Key('page-nutrition')), findsOneWidget);
+    expect(router.routeInformationProvider.value.uri.path, '/nutrition');
+    tester.view.physicalSize = const Size(812, 375);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('nav-bar')), findsOneWidget);
+    expect(
+      tester
+          .widget<NavigationBar>(find.byKey(const Key('nav-bar')))
+          .selectedIndex,
+      4,
+    );
+    expect(find.byKey(const Key('page-nutrition')), findsOneWidget);
+    expect(router.routeInformationProvider.value.uri.path, '/nutrition');
+  });
+
+  testWidgets('Enter activates a focused desktop navigation destination', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(800, 600));
+    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpAndSettle();
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(app.MyApp)),
+      listen: false,
+    ).read(appRouterProvider);
+    expect(router.routeInformationProvider.value.uri.path, '/home');
+    final destination = find.descendant(
+      of: find.byKey(const Key('nav-rail')),
+      matching: find.text('Nutrition'),
+    );
+    final focus = Focus.of(tester.element(destination));
+    focus.requestFocus();
+    await tester.pumpAndSettle();
+    expect(focus.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, '/nutrition');
+    expect(find.byKey(const Key('page-nutrition')), findsOneWidget);
+    expect(
+      tester
+          .widget<NavigationRail>(find.byKey(const Key('nav-rail')))
+          .selectedIndex,
+      4,
+    );
   });
 }

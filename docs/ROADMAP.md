@@ -11,10 +11,10 @@ unavailable full architecture and UX specifications.
 | DEV-001 | Fresh Flutter project, Android/iOS/Web scaffolding | Verified at `16d2b71` |
 | DEV-002 | Feature-first layering and app composition | Foundation pilot verified at `8ab2a52`; full-spec compliance unverified |
 | DEV-003a | Riverpod bootstrap and planned routing/storage dependencies | Implemented; resolver, analysis, VM widget test and Web build passed |
-| DEV-003b | Remaining dependencies and platform compatibility | Firebase packages resolved; iOS project target aligned to 15; backend remains uninitialized and native validation incomplete |
+| DEV-003b | Remaining dependencies and platform compatibility | Firebase packages resolved; iOS target 15; ARM64 debug APK built; backend and device/iOS runtime remain unverified |
 | DEV-004 | Theme and UI foundation | Provisional dark-first themes verified; finalized UX specification still needed |
 | DEV-005 | Navigation and app shell | Provisional five-section adaptive shell verified; final UX and authentication flow pending |
-| DEV-006 | Testing and CI | 17 widget tests and 12 controller tests pass locally; manual-only workflow prepared, remote run pending |
+| DEV-006 | Testing and CI | 20 widget tests and 12 controller tests pass locally; manual-only workflow prepared, remote run pending |
 
 DEV-003a and DEV-003b are small execution slices of the recovered DEV-003
 milestone, not new product requirements. No full DEV-003 task specification was
@@ -54,7 +54,8 @@ limits does not establish self-restart after Codex stops or the host sleeps.
 
 See DEVELOPMENT-HANDOFF.md for observed results and remaining limitations.
 
-Android SDK components are now installed; build validation remains limited by
-disk headroom and an active free-space reserve. Chrome-platform widget validation has timed out; a successful
+Android SDK components are installed and an ARM64-only debug APK built within
+the active disk reserve; full multi-ABI packaging and device runtime remain pending.
+Chrome-platform widget validation has timed out; a successful
 Web build is not evidence of browser-runtime success. These do not block saving
 the independently verified dependency/bootstrap source checkpoint.

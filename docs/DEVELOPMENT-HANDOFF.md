@@ -2,6 +2,36 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## DEV-006a regression coverage and ARM64 packaging
+
+- Navigation foundation saved as `3ad778f`. One subsequent bounded Claude
+  request proposed three test additions, using the same four approved inputs;
+  evidence: `20261117T010154.205610Z/` under `build/unattended-pilot/`.
+- The supervisor replaced its brittle two-Tab assumption with targeted focus
+  and real Enter activation, and strengthened resize assertions to check the
+  actual visible page and selected destination as well as URI. All 20 widget
+  tests passed. Formatting and analysis also passed after removing the two
+  temporary screenshot/YAML probes; their initial lint findings were confined
+  to those probes, not hidden through analyzer exclusions.
+- A single `flutter build apk --debug --target-platform android-arm64 --no-pub`
+  completed successfully in 51 seconds while retaining the 2 GB reserve.
+  Locked dependencies were verified first with offline `--enforce-lockfile`.
+  Evidence: `android-arm64-dev005/report.json`. APK:
+  `build/app/outputs/flutter-apk/app-debug.apk`, 97,604,426 bytes; SHA-256
+  `6dd1c6839749a115ac942b9f5e79e3d40db75966e44fb3e2ca67fb3ffa7637a9`.
+- APK inspection verified `com.gymworkouttracker.v2`, version 1.0.0 (1), target
+  SDK 36 and display name Gym Workout Tracker V2. The Flutter engine is ARM64;
+  transitive plugins also bundle some ARMv7/x64 libraries. This is not a
+  universal Flutter APK. No installation or device launch occurred.
+- Phone (390x844) and desktop (1280x800) PNGs were rendered with Flutter's test
+  engine, real local Roboto/Material fonts, and inspected by the supervisor.
+  No clipping/overlap was observed in those two Home layouts. Files are ignored
+  `preview-phone.png` / `preview-desktop.png`; these are widget renders, not
+  browser/device screenshots or complete visual/accessibility verification.
+- Remaining native gates: other CPU targets, release signing and device runtime;
+  iOS remains unbuilt on Windows. Browser tests still require diagnosis. Actual
+  tracking, persistence and Firebase remain unimplemented pending specifications.
+
 ## Current checkpoint: DEV-005a navigation and manual quality workflow
 
 - Claude supplied the eight-file navigation proposal via the existing 9router

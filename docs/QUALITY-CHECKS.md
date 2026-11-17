@@ -15,8 +15,11 @@ flutter build web --no-pub
 
 The controller tests never call Claude or the network. Windows-only job lifecycle
 coverage is skipped on Linux; Windows remains the host for that verified check.
-Widget tests cover bootstrap, routes, adaptive navigation, branch scroll retention,
-themes, semantic contrast and small/large-text viewports. They do not establish
+Twenty widget tests cover bootstrap, routes, Home shortcuts, adaptive navigation,
+selected-page preservation on resize, branch scroll retention, Enter activation
+of a focused rail destination, themes, contrast and small/large-text viewports.
+Programmatic focus in that activation test does not establish keyboard traversal.
+These tests do not establish
 browser rendering, device performance or complete accessibility compliance.
 
 ## Optional manual CI
@@ -37,7 +40,8 @@ Review pins deliberately when updating; no dependency-update automation is enabl
 ## Remaining platform gates
 
 Android builds use an active 2 GB free-space reserve and a process timeout.
-A full multi-ABI debug build has not completed within this host's disk budget.
+A debug build targeting android-arm64 completed and its APK metadata/checksum
+were verified. A full multi-ABI debug build has not completed within this host's disk budget.
 No Android device/emulator is connected. Native iOS builds require macOS/Xcode.
 Chrome-platform widget tests stalled even for an isolated plain-text probe;
 Web compilation passed, but browser runtime remains an open gate.
