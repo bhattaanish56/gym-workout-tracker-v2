@@ -10,6 +10,7 @@ dart format --output=none --set-exit-if-changed lib test
 flutter analyze --no-pub
 python -m unittest discover -s scripts -p test_claude_pilot.py -v
 flutter test --no-pub
+python scripts/check_browser.py
 flutter build web --no-pub
 ```
 
@@ -43,5 +44,13 @@ Android builds use an active 2 GB free-space reserve and a process timeout.
 A debug build targeting android-arm64 completed and its APK metadata/checksum
 were verified. A full multi-ABI debug build has not completed within this host's disk budget.
 No Android device/emulator is connected. Native iOS builds require macOS/Xcode.
-Chrome-platform widget tests stalled even for an isolated plain-text probe;
-Web compilation passed, but browser runtime remains an open gate.
+All 20 widget tests also passed in headless Chrome through `check_browser.py`.
+On Windows, the installed Flutter 3.44.6 test server has the URL-path mismatch
+described in [Flutter issue 192069](https://github.com/flutter/flutter/issues/192069).
+The helper corrects only URL classification in a disposable tool copy under
+`.dart_tool`; it does not patch the installed SDK. It logs the original handler
+hash and unchanged status, stops after 180 seconds or at a 2 GB disk reserve,
+and removes the copy. Other hosts use installed tooling directly. Reassess this
+workaround when upgrading Flutter rather than applying a global SDK patch.
+See ignored `build/unattended-pilot/browser-check.json` for actual outcomes.
+Manual browser visual/accessibility and device checks remain open gates.

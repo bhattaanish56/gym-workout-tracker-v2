@@ -2,6 +2,33 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## DEV-006b browser gate resolved with isolated tooling workaround
+
+- Found the installed Flutter 3.44.6 test server's Windows URL/path mismatch:
+  `_localCanvasKitHandler` converts `canvaskit/...` to backslashes and then checks
+  a forward-slash prefix. This matches the mechanism reported in
+  [Flutter issue 192069](https://github.com/flutter/flutter/issues/192069).
+- In a disposable local tooling copy, changed only that URL classification to
+  `request.url.path`. The isolated plain-widget Chrome probe passed, followed by
+  all 20 application widget tests in headless Chrome. Evidence:
+  `browser-path-diagnostic.json` and `browser-app-path-corrected.json` under
+  `build/unattended-pilot/`. Early copy/path setup failures were corrected before
+  either browser result was obtained; the installed SDK was never patched.
+- Added `scripts/check_browser.py` to reproduce the verified check. On affected
+  Windows tooling only, it copies the tool into a unique `.dart_tool` temporary
+  directory, rewrites dependency locations for that copy, makes the single URL
+  correction, and runs Chrome tests. Other hosts use their installed tooling.
+  It preserves a 2 GB reserve, bounds execution to 180 seconds, records the
+  installed handler hash/unchanged status and removes its disposable copy.
+- The reusable command independently passed all 20 tests; evidence:
+  `browser-check.json`. The installed handler remained byte-identical and the
+  temporary directory was removed. The earlier diagnostic tooling copy was also
+  removed after resolved-path/reparse checks; its JSON evidence remains.
+- Added the browser gate to the manual-only quality workflow. Ubuntu 24.04's
+  official runner image includes Chrome/Python; remote CI itself remains unrun.
+  Headless widget coverage is now verified, while manual browser visual checks,
+  Android installation/runtime, release packaging and native iOS remain pending.
+
 ## DEV-006a regression coverage and ARM64 packaging
 
 - Navigation foundation saved as `3ad778f`. One subsequent bounded Claude

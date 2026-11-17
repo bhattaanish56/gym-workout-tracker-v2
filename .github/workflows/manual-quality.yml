@@ -33,6 +33,8 @@ jobs:
         run: python3 -m unittest discover -s scripts -p test_claude_pilot.py -v
       - name: Test Flutter behavior
         run: flutter test --no-pub
+      - name: Test browser behavior
+        run: python3 scripts/check_browser.py
       - name: Build web
         run: flutter build web --no-pub
       - name: Save web build
