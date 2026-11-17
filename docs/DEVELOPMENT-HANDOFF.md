@@ -2,6 +2,46 @@
 
 Updated: 2026-11-17 (Asia/Katmandu).
 
+## Current checkpoint: DEV-005a navigation and manual quality workflow
+
+- Claude supplied the eight-file navigation proposal via the existing 9router
+  connection, using only the four explicitly approved input files. Evidence:
+  `20261117T000249.875380Z/` under ignored `build/unattended-pilot/`. The
+  supervisor reviewed and corrected routing, page constraints, Home callbacks,
+  empty-state copy and test assertions before applying the result.
+- Replaced the starter counter with Home, Workouts, Exercises, Progress and
+  Nutrition branches. Compact/short windows use bottom navigation; wider/taller
+  windows use a rail, extended on desktop. Root redirects, unknown-route recovery
+  and in-memory Home scroll retention are implemented. These are provisional
+  navigation screens; there is no logging, storage or backend behavior yet.
+- App, Android and web display names now agree. Web metadata uses the actual
+  dark surface color and allows both orientations. Application IDs are unchanged.
+- Independent formatting, analysis, 17 VM widget tests and Web build all passed.
+  Evidence: `dev005a-validation/final/report.json`. Browser/device/manual visual
+  checks remain unverified; serving HTTP 200 is not evidence of rendered UI.
+- Controller manifests now support bounded task-specific time/budget estimates.
+  Proposal parsing accepts one explicit JSON fence from the provider and rejects
+  ambiguous artifacts. Path checks reject drive/alternate-stream colons on every
+  host. All 12 controller tests passed after these changes.
+- `.github/workflows/manual-quality.yml` is manual-only, has a 20-minute limit,
+  a read-only token and immutable action pins. It resolves the lockfile, formats,
+  analyzes, runs controller/widget tests and produces a Web artifact. YAML and
+  trigger/permission/pin checks passed locally. No remote CI run is claimed;
+  no Git remote exists and no recurring trigger or Claude job was enabled.
+- A read-only localhost preview is bounded to four hours. Runtime URL and expiry
+  are in ignored `local-preview.json`; it was queued for the Codex browser panel,
+  but no visual rendering was confirmed. It is not a deployment or persistent
+  development dispatcher.
+- The previous full multi-ABI Android attempt stopped at the 2 GB disk reserve.
+  Only its generated `build/app` directory was removed after path/symlink checks;
+  Web output and diagnostic logs were preserved, restoring about 4.1 GB free.
+  Completed SDK components remain installed. No APK success is claimed here.
+
+Earlier sections below are historical checkpoints. Current pending work is
+native/runtime validation and recovery of the full specifications before
+implementing authoritative tracking rules or a data schema. Second Brain writes
+remain outside the permitted roots; this repository is the verified handoff.
+
 ## DEV-004a provisional theme foundation
 
 - Claude produced the Material 3 light/dark theme library, widget coverage and

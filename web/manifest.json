@@ -1,12 +1,12 @@
 {
-    "name": "gym_workout_tracker_v2",
-    "short_name": "gym_workout_tracker_v2",
+    "name": "Gym Workout Tracker V2",
+    "short_name": "Gym Tracker V2",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#151218",
+    "theme_color": "#151218",
+    "description": "A personal workspace for workouts, exercises, progress and nutrition.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

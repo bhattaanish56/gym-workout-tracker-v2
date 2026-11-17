@@ -4,7 +4,7 @@ Complete rewrite of the gym workout tracking application. Android-first with Web
 
 ## Project Status
 
-**Foundation development in progress** — Architecture, dependency setup, Riverpod bootstrap and a provisional dark-first theme are implemented. Full specification compliance remains pending recovery of the referenced architecture and UX documents.
+**Foundation development in progress** — Architecture, dependency setup, Riverpod bootstrap, a provisional dark-first theme and five-section adaptive navigation are implemented. Tracking, persistence and backend behavior remain pending. Full specification compliance requires recovery of the referenced architecture and UX documents.
 
 ## Platform Support
 
@@ -16,7 +16,7 @@ Complete rewrite of the gym workout tracking application. Android-first with Web
 
 - **Framework:** Flutter 3.44.6 / Dart 3.12.2
 - **State Management:** Riverpod (root scope configured)
-- **Navigation:** GoRouter (installed; configuration pending)
+- **Navigation:** GoRouter (five branches, adaptive bottom bar / navigation rail)
 - **Local Storage:** Drift/SQLite (installed; configuration pending)
 - **Backend:** Firebase Core, Authentication and Firestore (packages installed; backend configuration pending)
 - **Architecture:** Feature-first layered
@@ -78,7 +78,13 @@ Feature-first structure with clear separation of concerns. Full architecture doc
 - [x] DEV-002: App composition and feature-first architecture foundation
 - [ ] DEV-003: Dependencies and platform validation (dependency foundation implemented)
 - [ ] DEV-004: Theme and UI foundation (provisional light/dark themes verified)
-- [ ] Additional milestones TBD
+- [ ] DEV-005: Navigation and app shell (provisional shell verified)
+- [ ] DEV-006: Testing and CI (local checks passed; manual workflow prepared, not run remotely)
+
+The workflow in `.github/workflows/manual-quality.yml` has only a manual trigger.
+It analyzes, tests and builds a web artifact; it does not deploy or run Claude.
+There is no recurring development worker. See `docs/DEVELOPMENT-HANDOFF.md` for
+verified results, platform limitations and the bounded implementation process.
 
 ## License
 

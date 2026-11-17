@@ -78,6 +78,7 @@ class PilotTests(unittest.TestCase):
         for payload in (json.dumps(proposal),
                         "<thinking>provider prefix</thinking>\n" + json.dumps(proposal),
                         "```json\n" + json.dumps(proposal) + "\n```",
+                        "Reading task.\n```json\n" + json.dumps(proposal) + "\n```\nDone.",
                         "<thinking>provider prefix</thinking>\n```json\n" + json.dumps(proposal) + "\n```"):
             result = {"timed_out": False, "exit_code": 0, "stdout": json.dumps({
                 "subtype": "success", "is_error": False, "result": payload})}
@@ -88,14 +89,28 @@ class PilotTests(unittest.TestCase):
                                        "result": "arbitrary prose " + json.dumps(proposal)})
         with self.assertRaises(ValueError):
             validate_proposal(result)
+        result["stdout"] = json.dumps({"subtype": "success", "is_error": False,
+                                       "result": "```json\n" + json.dumps(proposal) + "\n```\n```json\n{}\n```"})
+        with self.assertRaises(ValueError):
+            validate_proposal(result)
 
     def test_task_rejects_outside_and_configuration_paths(self):
         with tempfile.TemporaryDirectory() as directory:
             task = Path(directory) / "task.json"
-            for name in ("../outside.dart", "C:outside.dart", ".git/settings.yaml", ".env", "scripts/tool.py"):
+            for name in ("../outside.dart", "C:outside.dart", "lib/source.dart:hidden.yaml", ".git/settings.yaml", ".env", "scripts/tool.py"):
                 task.write_text(json.dumps({"input_files": [name], "output_files": [], "prompt": "test"}), encoding="utf-8")
                 with self.assertRaises(ValueError, msg=name):
                     load_task(task)
+
+    def test_task_rejects_unbounded_resource_limits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "task.json"
+            for settings in ({"timeout_seconds": 0}, {"timeout_seconds": 901},
+                             {"budget_usd": 0}, {"budget_usd": 3}, {"budget_usd": float('nan')}):
+                path.write_text(json.dumps({"input_files": [], "output_files": ["docs/proposal.md"],
+                                            "prompt": "test", **settings}), encoding='utf-8')
+                with self.assertRaises(ValueError):
+                    load_task(path)
 
     @unittest.skipUnless(sys.platform == "win32", "Windows job object lifecycle")
     def test_supervisor_exit_kills_worker(self):
