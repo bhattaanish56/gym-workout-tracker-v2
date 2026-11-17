@@ -173,16 +173,26 @@ integration_test/               # End-to-end tests (reserved for later)
 
 ## Development Status
 
-**Current Phase:** Foundation
-- [x] Fresh Flutter project created
-- [x] Initial architecture defined
-- [x] App-level structure established (lib/app/app.dart)
-- [ ] Dependencies added (Riverpod, GoRouter, Drift, Firebase)
-- [ ] Design system implemented
-- [ ] Navigation configured
-- [ ] Feature development
+**Current Phase:** Foundation (DEV-001 through DEV-005 completed)
+- [x] Fresh Flutter project created (DEV-001)
+- [x] Initial architecture defined (DEV-002)
+- [x] App-level structure established (DEV-002)
+- [x] Dependencies added: Riverpod 3.5.0, GoRouter 18.1.4, Drift 2.35.4, Firebase (DEV-003)
+- [x] Design system implemented: Material 3 dark-first theme with approved V2 tokens (DEV-004/DEV-005)
+- [x] Navigation configured: GoRouter five-branch adaptive shell (DEV-005)
+- [x] Test foundation: 20 widget tests, manual CI workflow (DEV-006)
+- [ ] Feature development: Drift schema, Auth, business logic remain unimplemented
+
+**Outstanding Verification:**
+- Android device runtime and installation testing
+- iOS native builds (requires macOS/Xcode)
+- Remote CI execution (manual workflow defined but not run)
+- Browser visual rendering verification
+- Full accessibility audit with assistive technologies
+
+**Note:** Current branch `codex/dev005-navigation-foundation` (565c1cc). Specifications imported 2026-11-17 are reconstructed references requiring validation against original approved documents before treating as authoritative implementation guidance.
 
 ---
 
 **Last Updated:** 2026-11-17
-**Document Version:** DEV-002
+**Document Version:** DEV-002 (revised)

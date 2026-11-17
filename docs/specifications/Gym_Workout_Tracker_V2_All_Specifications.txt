@@ -1,0 +1,735 @@
+GYM WORKOUT TRACKER V2 — RECONSTRUCTED SPECIFICATIONS
+These are not verbatim original finalized documents.
+
+
+==========================================================================================
+FILE: GWT-V2-ARCH-001.md
+==========================================================================================
+
+# GWT-V2-ARCH-001 — Technical Architecture
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Target and design principles
+Flutter/Dart multi-platform fitness app: Android-first and Web-compatible; iOS is a supported target but native build validation requires macOS/Xcode. Prioritize correctness, offline durability, clear security boundaries, incremental testing and independently evolvable feature modules.
+
+## Planned technology
+- UI/application: Flutter, Material 3, Riverpod, GoRouter.
+- Local persistence: Drift backed by SQLite on Android; SQLite/WASM approach on Web with explicit durability testing.
+- Identity: Firebase Auth with email/password and Google Sign-In.
+- Cloud: Cloud Firestore plus trusted server operations (Firebase Cloud Functions or equivalent) for mutations requiring serialized revisions/leases/completion/deletion.
+- Offline exercise/food catalogs with provable data/media attribution and appropriate external lookup adapters.
+- Future AI runs through a trusted proxy, never directly exposing secrets in client.
+
+## Layer model
+```text
+lib/
+  main.dart
+  app/            # bootstrap, dependency composition, router, themes
+  core/           # errors, IDs, shared primitives, cross-cutting contracts
+  features/
+    authentication/
+    onboarding/
+    home/
+    programs/
+    sessions/
+    exercises/
+    progress/
+    nutrition/
+    profile/
+    account_data/
+    ai_assistant/  # future-only; no runtime requirement in initial release
+  shared/         # reusable presentation components
+```
+Create only directories/classes required by the milestone, not artificial shells for every anticipated service.
+
+Within substantial features:
+- `presentation`: screens, widgets, UI model and Riverpod presentation state.
+- `application`: use cases, orchestration, transactions and workflow services.
+- `domain`: pure entities, typed value objects, rules and repository interfaces.
+- `data`: repository implementations, local/cloud mapping and external adapters.
+- `infrastructure` where needed: platform wrappers, database driver, auth-provider integration and cloud transport.
+
+Dependency direction: presentation → application → domain; data implements inward contracts. Domain must not depend on Flutter UI, Firebase SDK or concrete storage libraries. Cross-feature dependencies should go through clear, minimal contracts. App root wires concrete implementations.
+
+## Domain boundaries
+- **Programs** define intentions and scheduling; **Sessions** record performances and completion facts.
+- **Exercises** identifies current catalog entries; historical sessions retain snapshots.
+- **Progress** projects from sessions and bodyweight entries; analytics code must be deterministic and testable.
+- **Nutrition** owns foods, goals, recipes and diary snapshots.
+- **Authentication/account_data** owns identity, authorization, export, deletion and account isolation.
+- **Sync** orchestrates local outbox and accepted cloud mutations without becoming a second business domain.
+
+## Data ownership and synchronization
+1. Local Drift state is the operational source for responsive UI and offline writes.
+2. A transactional outbox records idempotent operations alongside local changes.
+3. On reconnect, sync replays pending operations to an authenticated trusted endpoint, then adopts accepted server revisions.
+4. Never treat Firestore offline cache as another independently authoritative data layer.
+5. Cloud change feed/cursor or equivalent reconciles remote accepted edits with local records.
+6. Ordinary conflicts may follow a documented winner policy; preserve destructive conflict cases involving performed workout data.
+7. Completion/rotation uses idempotency keys and authorized server-side coordination.
+8. Connected active-session lease handling cannot fully prevent simultaneous offline edits; surface conflict and retain recoverable data.
+9. Tombstones prevent deletion resurrection; terminal account deletion blocks stale outbox replay.
+
+## Auth and backend
+Enforce UID ownership and verification in backend and security rules, not only UI. Firebase client configuration is not a credential substitute; privileged service credentials remain server-side. Verify billing, Cloud Functions support, Firestore rules, Google provider setup and quotas before committing implementation details.
+
+## Platform constraints
+- Web: test Drift/WASM persistence across browser restarts, private mode, storage eviction and hosting origin changes.
+- Android: test runtime and disk requirements; compile success alone is not device validation.
+- iOS: keep Dart/core portable; native Firebase and signing must be verified later on macOS.
+- Responsive navigation and media differences belong in adapters rather than fitness rules.
+
+## Coding/testing conventions
+- Files `snake_case.dart`, Dart types `UpperCamelCase`, public API names readable and feature-scoped.
+- Keep pure calculations unit tested; repository contracts have fake/in-memory test implementations.
+- Widget tests verify navigation, form validation, accessibility-relevant semantics and offline/empty/error states.
+- Database and sync tests cover migrations, retries, conflict, account isolation, stale deletes and event idempotency.
+- CI: formatting, analysis, tests and platform builds, with device smoke tests before release.
+- Git: small focused commits after review; no automatic force push or destructive reset.
+
+## Implementation status note (2026-11-17 handoff)
+Current reported code includes Riverpod app composition, GoRouter stateful shell, five navigation destinations, theme and test foundation; Drift, Firebase and Firestore dependencies are present but **actual schemas, configured Auth and sync are not implemented**. Verify repository before assigning work. Current reported branch `codex/dev005-navigation-foundation`, HEAD `565c1cc`, remote `https://github.com/bhattaanish56/gym-workout-tracker-v2`.
+
+
+==========================================================================================
+FILE: GWT-V2-AUDIT-001.md
+==========================================================================================
+
+# GWT-V2-AUDIT-001 — Cross-Module Consistency & Risk Audit
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Purpose
+Audit the interfaces between workout programs, sessions, exercise identities, analytics, authentication, offline sync, nutrition, and deferred AI so that separate feature implementations cannot violate shared invariants.
+
+| Risk / contradiction | Why it matters | Required mitigation / acceptance |
+|---|---|---|
+| Competing offline owners (Drift vs Firestore cache) | Conflicting replays / unreadable state | Drift is local operational source; explicit outbox and accepted remote revisions |
+| Workout completion duplicated on retry | Wrong rotation, schedule and streak | Stable completion-event ID; trusted idempotent acceptance |
+| Historical correction replays completion | Schedule advances again | Editing/deleting history recalculates projections only; no new completion event |
+| Current program/exercise mutation rewrites history | Corrupt past performance | Immutable snapshots for performed workout context |
+| Two devices log one live workout | Data loss and split ownership | Connected leases, visible offline uncertainty, preserve conflict payloads |
+| Client chooses cloudRevision | Race conditions / privilege escalation | Trusted backend controls revisions and write acceptance |
+| Deleted items resurface after offline replay | Loss of user trust | Tombstones and deletion barrier; stale operation rejection |
+| User changes account while offline | Cross-user data exposure | UID-scoped DB/sync state and session/logout isolation |
+| Web local persistence unreliable | Missing logs after reload | Explicit Web SQLite/WASM durability testing and recovery policy |
+| Incorrect units and numeric precision | Bad progress/food totals | Canonical unit model, constrained arithmetic and tests |
+| Workout/body-weight resistance conflated | Wrong strength metric | Explicit exercise load semantics; exclude incomparable cases |
+| Streaks counted per session rather than day | Inflated consistency | Unique local workout-day policy |
+| Nutrition unlogged day treated as zero | Misleading compliance charts | Diary completeness flags; sparse-data truthful UX |
+| Generic portion size assumed across foods | Wrong macros | Food-specific serving conversion/calibration |
+| Media use without rights | Licensing/compliance risk | Verify catalog/media attribution, permitted use and caching |
+| Provider data merged by similar names | Wrong exercise instructions | Stable IDs, source map and reviewed alias/dedupe |
+| Firebase SDK dependencies mistaken for implemented sync | False milestone completion | Require migrations, auth configuration, rules and integration tests |
+| Google Sign-In and verification claims | Security gaps | Verify provider state on backend and real device |
+| Serverless backend and quota unvalidated | Cost or operational surprise | Feasibility check before wiring high-volume trusted writes |
+| AI shares private data without user awareness | Privacy risk | Deferred, informed enablement and contextual controls |
+
+## Integration contracts to validate
+1. **Programs → Sessions:** plan target copied to session snapshot; performed values live only in session.
+2. **Sessions → Progress:** raw completed working sets and completion calendar facts; analytics are projections.
+3. **Sessions → Programs:** completion event advances rotation once.
+4. **Exercises → Sessions:** stable catalog reference plus immutable display snapshot.
+5. **Nutrition catalog → Diary:** serving and nutrition snapshot at consumption time.
+6. **Auth → Local DB:** UID is boundary for every private record, cache, outbox and sync cursor.
+7. **Local DB → Sync → Cloud:** operation acceptance/revision/conflict state is explicit.
+8. **Account delete → All modules:** terminal barrier and cleanup consistency.
+9. **AI → Other domains:** read-only scoped context unless explicit confirmed action.
+
+## Milestone gates
+- **Foundation:** architecture and user-facing themes/navigation validated, no faux implementation claims.
+- **Identity/data:** rules, account isolation, local schema and migrations tested.
+- **Exercise/program/session:** offline durability and historical snapshots demonstrated.
+- **Analytics:** formulas and retroactive edits cross-tested.
+- **Sync:** idempotency, conflict and deletion race tests pass.
+- **Nutrition:** provenance and portion arithmetic verified.
+- **Release:** real-device Android, Web persistence, accessibility, security and deployment tests.
+
+## Open decisions requiring implementation review
+- Trusted backend service/hosting billing and transaction approach.
+- Exact per-feature conflict-resolution policy and cloud change-feed mechanics.
+- Web local database driver/hosting strategy.
+- Source/license for final offline exercise GIF and food data distributions.
+- Time-zone policy for historical workout-day boundaries and streak correction.
+
+
+==========================================================================================
+FILE: GWT-V2-DATA-001.md
+==========================================================================================
+
+# GWT-V2-DATA-001 — Data Contract & Offline Synchronization
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Status and boundary
+Proposed data architecture reconstructed from the planning handoff. This is a design contract to validate, **not an already implemented database migration**. Specific field names, indexes, numeric precision and backend cost require implementation review.
+
+## Global invariants
+1. Stable UUID identifiers for user-created aggregates, performed sessions and mutation operation IDs.
+2. Every private record is owned/scoped to a UID; no cross-account cache leakage.
+3. UTC instants for ordering plus explicit user-local calendar date/time zone information where day semantics matter.
+4. Numeric values stored consistently with declared units/precision; avoid relying on binary-floating equality for financial-like nutrition quantities or weight conversions.
+5. Created/updated timestamps plus cloud revision as server-accepted state. Client timestamp alone does not establish conflict authority.
+6. Atomic local transaction must persist both data change and outbox operation.
+7. Deletion uses tombstones and a terminal barrier for account deletion.
+8. Historical performed sets and consumed food entries preserve snapshots independent of changing catalog entities.
+9. Cloud completion and flexible rotation accept the event once per stable idempotency key.
+10. Local DB, Firestore mappings, and API payloads must version schemas explicitly.
+
+## Local relational table groups (planned)
+### Account and preferences
+`local_accounts`, `profiles`, `preferences`, `onboarding_progress`, `sync_cursors`, account deletion status.
+
+### Plans and schedules
+`programs`, `program_days`, `planned_exercises`, `planned_set_targets`, `schedule_occurrences`, `rotation_states`, `program_versions` or snapshot fields.
+
+### Workouts
+`workout_sessions`, `performed_exercises`, `performed_sets`, `rest_timer_state`, `workout_completion_events`, `session_ownership`, `recovery_checkpoints`.
+
+### Exercises
+`exercises`, `exercise_aliases`, `exercise_sources`, `exercise_media`, `custom_exercises`, `favorite_exercises`, `exercise_merges`.
+
+### Progress
+`body_weight_entries`, `weekly_workout_goals`, optional cached metric projections with invalidation metadata; prefer raw facts as source of truth.
+
+### Nutrition
+`foods`, `food_sources`, `food_servings`, `food_barcodes`, `custom_foods`, `saved_meals`, `recipes`, `recipe_ingredients`, `nutrition_diary_entries`, `nutrition_goals`, optional completeness markers.
+
+### Sync/audit
+`outbox_operations`, `sync_conflicts`, `sync_checkpoints`, `tombstones`, `schema_migrations`, optional repair audit.
+
+## Example relationship / ownership rules
+- Account `1:N` programs; program `1:N` days; day `1:N` planned exercises.
+- Account `1:N` sessions; session `1:N` performed exercises; performed exercise `1:N` performed sets.
+- Session can reference original planned day, but must carry a historical snapshot so program deletion does not cascade-delete performed records.
+- Completion event is unique by event ID and logically unique per accepted session completion.
+- Diary entry owns its consumed nutrition snapshot and is not recomputed when a food/recipe changes later.
+- Every local query includes UID scoping or operates in a provably UID-specific database namespace.
+
+## Suggested cloud layout
+```text
+users/{uid}
+  profile/...
+  preferences/...
+  programs/{programId}
+  programDays/{dayId}             # or nested under program with rules verified
+  workoutSessions/{sessionId}
+  workoutCompletionEvents/{eventId}
+  scheduleOccurrences/{occurrenceId}
+  rotationStates/{programId}
+  bodyWeightEntries/{entryId}
+  nutritionEntries/{entryId}
+  nutritionGoals/{goalId}
+  customExercises/{exerciseId}
+  customFoods/{foodId}
+  syncChanges/{sequenceId}        # if a trusted per-user change feed is selected
+sharedCatalogs/...               # explicitly public/licensed, not private user data
+```
+Do not adopt a layout solely because it looks convenient: define indexing, transaction constraints, document size, security rules and operational cost.
+
+## Mutation protocol (conceptual)
+```text
+User action
+  -> validate domain command
+  -> Drift transaction: update local aggregate + append outbox op(UUID)
+  -> UI reflects locally saved status
+  -> sync worker submits authenticated operation
+  -> trusted backend validates UID, revision, ownership, idempotency
+  -> Firestore transaction commits accepted revision/change event
+  -> client stores acknowledged revision and clears outbox op
+  -> change feed reconciles remote changes without duplicating effects
+```
+
+## Conflict strategy
+- Preserve the original local and remote payload/revision in a conflict record when resolving automatically might lose completed workout/food logging.
+- Last server-confirmed edit may apply to simple ordinary aggregates where user-data loss is tolerable and documented.
+- Use compare-and-swap based on cloudRevision, not blindly trusting client `updatedAt`.
+- Account deletion sets a server-confirmed terminal status to reject stale devices.
+- No duplicate flexible-rotation advancement for replayed completion events.
+
+## Active session ownership
+- Connected mode: lease claim/renew/expiry via trusted backend and owner device/session token.
+- Offline mode: allow recoverable local logging, visibly explain ownership uncertainty; reconcile on reconnect without silently discarding performed sets.
+
+## Migration and bootstrap
+- Version each Drift schema; validate upgrades against data snapshots and destructive migration prohibition.
+- Initial account bootstrap and pagination must be restart-safe and UID-scoped.
+- Browser local storage durability is not guaranteed in all environments; test Web persistence explicitly and disclose risks.
+
+## Security requirements
+- Deny-by-default Firestore security rules; verify UID and verification state where required.
+- Trusted backend holds service privileges; never client.
+- Rate limits and content restrictions for external data/media and future AI.
+- Data export and deletion must cover user records, queued operations and inaccessible orphaned blobs as appropriate.
+
+## Test matrix (minimum categories, not full original enumerated 60 cases)
+- Duplicate commands/retries; revision mismatch and out-of-order writes.
+- Interrupted transactions and app termination during logging.
+- Account switch; cross-UID access rejection; email verification enforcement.
+- Offline completion and reconnect; concurrent active sessions.
+- Tombstone sync and stale record resurrection prevention.
+- Program edit after session; exercise/recipe rename after historical logging.
+- Time-zone changes and local calendar day definitions.
+- Web restart/persistence and SQLite migration upgrade/downgrade safety.
+- Export/delete execution and stale device replay rejection.
+
+
+==========================================================================================
+FILE: GWT-V2-DEV-001.md
+==========================================================================================
+
+# GWT-V2-DEV-001 — Development Roadmap & Task Register
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Workflow
+This roadmap records the planned **DEV-001 through DEV-060** tasks. It is a reference checklist, **not a mandate** to use unattended automation. User has chosen manual ChatGPT planning/review → copy prompt to Claude Code → review/test → explicit Git commit/push.
+
+## Milestones and tasks
+### M0 — Foundation
+- **DEV-001:** Initialize fresh Flutter workspace, platforms and initial Git. **Confirmed completed**; initial commit `16d2b71`.
+- **DEV-002:** Review/establish feature-first module boundaries and architecture documentation. **Substantially present, formal completion to verify**.
+- **DEV-003:** Pin dependencies and validate Android/Web tooling, including Drift/Web feasibility. **Dependencies and builds partly verified; Android device runtime pending**.
+- **DEV-004:** Establish dark-first theme and reusable UI elements. **Theme corrected in commit `565c1cc`; components review pending**.
+- **DEV-005:** Implement GoRouter five-tab adaptive shell. **Navigation present provisionally; UX acceptance review pending**.
+- **DEV-006:** Establish tests and CI. **Local widget tests and manual CI workflow reported; remote run pending**.
+
+### M1 — Identity and local data
+- **DEV-007:** Finalize reviewed data contracts, constraints and persistence roadmap.
+- **DEV-008:** Implement domain primitives, typed IDs/units/time and validation.
+- **DEV-009:** Implement/test Drift schema and Android/Web persistence/migrations.
+- **DEV-010:** Configure Firebase Auth email/password and Google Sign-In.
+- **DEV-011:** Implement verification gates and authenticated navigation.
+- **DEV-012:** Implement skippable onboarding, profile and preferences.
+- **DEV-013:** Enforce Firestore rules and emulator security tests.
+
+### M2 — Exercise Library
+- **DEV-014:** Curate/licence offline exercise catalog.
+- **DEV-015:** Search/filter/alias-backed exercise browse UI.
+- **DEV-016:** Exercise instruction and licensed demonstration media.
+- **DEV-017:** Favorites and user-created exercises.
+- **DEV-018:** Alternatives and in-workout/program exercise selector.
+
+### M3 — Workout Programs
+- **DEV-019:** Program entities and repository logic.
+- **DEV-020:** Six-step program wizard and drafts.
+- **DEV-021:** Starter templates, cloning and saved programs.
+- **DEV-022:** Fixed weekly scheduling and occurrences.
+- **DEV-023:** Flexible rotation and exactly-once completion advance.
+- **DEV-024:** Schedule/program dashboard integration.
+
+### M4 — Active Sessions
+- **DEV-025:** Workout session domain and source snapshots.
+- **DEV-026:** Scrollable session UI and exercise cards.
+- **DEV-027:** Durable sets, notes and local autosave.
+- **DEV-028:** Rest timer and recovery state.
+- **DEV-029:** In-session add/replace/reorder exercise actions.
+- **DEV-030:** Safe finish/partial completion/idempotent event.
+- **DEV-031:** Process-restart recovery and active-session ownership.
+
+### M5 — History & Analytics
+- **DEV-032:** History/calendar/session detail.
+- **DEV-033:** Historical corrections and tombstone-aware deletion.
+- **DEV-034:** Strength/working volume/estimated 1RM analytics.
+- **DEV-035:** Body-weight entry, trend, BMI.
+- **DEV-036:** Goals, adherence, streak/consistency.
+- **DEV-037:** Progress dashboard/chart views.
+
+### M6 — Cloud synchronization
+- **DEV-038:** Firestore aggregates, mapping and server revisions.
+- **DEV-039:** Durable local outbox, replay and bootstrap.
+- **DEV-040:** Conflict detection/resolution and recovery UX.
+- **DEV-041:** Cloud acceptance of exactly-once workout completion.
+- **DEV-042:** Connected active-session lease/ownership resolution.
+- **DEV-043:** Pending/offline/synced/conflict status UI.
+
+### M7 — Nutrition
+- **DEV-044:** Curated sourced food catalog.
+- **DEV-045:** Serving/portion and nutrition arithmetic.
+- **DEV-046:** Diary, goals and completeness states.
+- **DEV-047:** Saved meals and recipes.
+- **DEV-048:** Android barcode scanner + Web manual fallback.
+- **DEV-049:** Nutrition trends and charting.
+- **DEV-050:** Nutrition cloud synchronization.
+
+### M8 — Release
+- **DEV-051:** User data export.
+- **DEV-052:** Permanent account deletion and barriers.
+- **DEV-053:** Schema migration and recovery hardening.
+- **DEV-054:** Security/privacy audit.
+- **DEV-055:** Performance, accessibility and UX polish.
+- **DEV-056:** Android/Web release verification and distribution readiness.
+
+### M9 — Deferred AI
+- **DEV-057:** Provider/cost/privacy evaluation.
+- **DEV-058:** Context selection, permissions and safety guardrails.
+- **DEV-059:** AI assistant conversation UI and backend proxy.
+- **DEV-060:** AI quality, privacy, resilience and abuse tests.
+
+## Report format per task
+- Objective / approved scope
+- Git branch and before/after status
+- Files created/modified and justification
+- Packages/services/config changed
+- Tests, build verification and failures
+- Known risks and next task suggestion
+- No automatic commits, pushes, resets or unrelated work without explicit approval
+
+## Latest reported state (2026-11-17)
+- Local path: `C:\Users\neyma\OneDrive\Desktop\gym_workout_tracker_v2`.
+- GitHub remote: `https://github.com/bhattaanish56/gym-workout-tracker-v2` (reported private, six local branches pushed).
+- Branch: `codex/dev005-navigation-foundation`, HEAD `565c1cc` and clean working tree at report time.
+- Riverpod app root, GoRouter adaptive five-tab shell, theme and tests present. Actual workout/auth/nutrition/persistence/sync business features remain unimplemented.
+- Existing development handoff: `docs/DEVELOPMENT-HANDOFF.md` should be inspected locally (not included in this bundle).
+
+
+==========================================================================================
+FILE: GWT-V2-FS-001.md
+==========================================================================================
+
+# GWT-V2-FS-001 — Workout Programs, Planning & Scheduling
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Purpose and scope
+Provide editable training programs, day-by-day exercise prescriptions, and deterministic scheduling without coupling program edits to logged workout history.
+
+## Functional requirements
+1. A user can browse curated starter templates (including common splits such as Push/Pull/Legs), duplicate a template into a personal editable program, or create one from scratch.
+2. A program contains ordered workout days. Each day contains ordered exercise prescriptions and suggested set targets; prescriptions are intentions, not performed results.
+3. Program creation/editing should follow a six-step guided wizard in the final UX. User can save incomplete drafts, return without losing progress, and review the plan before activation.
+4. The user may configure a **fixed weekly schedule** (chosen weekdays) or **flexible rotation** (advance through ordered workout days whenever a workout is completed).
+5. Exactly one program may be active per user at a time. Changing the active program must preserve historical sessions and retain past program versions or snapshots needed for interpretation.
+6. Weekly schedules must handle unscheduled days, skipped/missed sessions, and multiple workouts on a day without silently counting unperformed days as completed.
+7. Flexible rotation advances **once per unique completion event**; recovery, retry, re-sync, or editing a historical session must never advance rotation again.
+8. The user can pause, activate, deactivate, edit, and reorder programs and days as permitted by design, with clear confirmation for disruptive changes.
+9. A workout can start from a scheduled occurrence, from a manually chosen program day, or as freestyle; starting a planned session never mutates a history record until it is performed.
+10. Program list and schedule display must work from local data offline. Sync after reconnection must not create duplicate schedule occurrences.
+
+## Proposed domain model
+- Program: stable ID, owner UID, name, description, schedule mode, ordered days, active/draft/archived status, local/cloud revision metadata.
+- ProgramDay: stable ID, program ID, order, name/target, ordered exercise prescriptions.
+- PlannedExercise: stable ID, catalog/custom exercise reference, order, targets, rest guidance and notes.
+- ScheduleOccurrence: unique occurrence ID, program/day ID and local calendar date when applicable, status and completion linkage.
+- RotationState: program ID, next day index, last accepted completion-event ID and revision.
+- CompletionEvent: stable idempotency key; immutable logical fact that a session completed a program day.
+
+## Behavior / edge cases
+- Missing scheduled day: show it as missed or pending per policy; do not automatically shift a fixed schedule into a rotation.
+- Cross-midnight session: completion event links the relevant program occurrence; calendar display uses the established workout-day policy and user time zone.
+- Program edits during active sessions: current session retains a snapshot of the prescribed exercises and targets.
+- Two devices updating the same active program: preserve conflicting intent when needed; do not silently double-activate or advance twice.
+- User-defined custom exercise removal must not orphan planned/historical content.
+
+## UX acceptance
+- Create, preview, save draft, edit, duplicate and activate a program.
+- Clearly distinguish a planned day from a completed workout.
+- Explain the next suggested workout for both fixed and rotating schedules.
+- Empty state teaches creation or template selection; no synthetic history.
+
+## Engineering acceptance tests
+- Template cloning creates independent editable IDs and does not modify curated templates.
+- Only one active program per account can be accepted.
+- Duplicate completion event is idempotent and does not advance rotation twice.
+- Historical session remains unchanged after program edit or deletion.
+- Time-zone and missed-day scheduling produce deterministic results.
+- Scheduling, activation and occurrence operations are account-scoped and durable offline.
+
+
+==========================================================================================
+FILE: GWT-V2-FS-002.md
+==========================================================================================
+
+# GWT-V2-FS-002 — Active Workouts, Sets & Rest Timer
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Purpose
+Make logging a workout fast, accurate, recoverable, and trustworthy even if an app is terminated or connectivity disappears.
+
+## Functional requirements
+1. Start a session from a scheduled workout day, a selected program day, or freestyle.
+2. Record exercise order, weight, reps, set type (warm-up/working), completion status and optional notes. Preserve actual performed values separately from planned targets.
+3. Add, remove, replace, reorder and configure exercises during a session without altering the source program.
+4. Add/edit/delete sets; completed sets remain distinguishable from merely populated set rows. Weight semantics and units must be explicit.
+5. Show prior performance only when it is grounded in actual user history, never mock data.
+6. Provide a compact rest timer supporting sensible start/stop/reset/adjustment; timer state survives route changes as appropriate and must not block set entry.
+7. Persist all meaningful session changes in an atomic local transaction with recovery metadata; an app restart must recover the latest valid state.
+8. Allow pause/abandon or finish early with clear treatment of partially completed sets. Never label an unfinished workout as fully completed without user action.
+9. Preserve a snapshot of exercise names, units and planned program context at the time of the session so historical views do not change when the catalog/program changes.
+10. Enforce one active session per account under normal connected usage. Multi-device ownership/lease conflicts must be surfaced rather than silently merged; fully offline simultaneous sessions cannot be guaranteed exclusive.
+11. Finishing a session writes the session, completion event, and local outbox atomically. Repeated finish taps/retries must be idempotent.
+12. Saving a historical correction must not replay finishing-side effects (program rotation, streak event or completion acknowledgment).
+
+## Suggested entities
+- WorkoutSession: UID, stable session ID, source type, start/end UTC timestamps, local workout date, program/day snapshot, status, owner lease markers and local/cloud revisions.
+- PerformedExercise: ordered performed exercise with canonical exercise reference plus immutable historical display snapshot.
+- PerformedSet: ordered set type, numeric load, load unit, reps, optional effort data if later approved, notes, completed flag.
+- TimerState: rest settings, timer anchor/expiry, interrupted/recovery state.
+- WorkoutCompletionEvent: unique event identifier, session ID, optional program occurrence, timestamp and idempotency key.
+
+## Recovery and concurrency
+- Writes should commit locally before UI indicates durable save; queue cloud mutation separately.
+- UI must distinguish unsaved editing, locally saved, syncing, and confirmed cloud states.
+- Recovery handles process death, expired leases, multiple device edits, app upgrade and user logout.
+- Conflicting workouts should preserve both versions/data for manual resolution rather than last-write-wins data loss.
+- No active-session ownership assumptions should be silently claimed when a device is offline.
+
+## UX acceptance
+- Exercise cards are scrollable; primary start/finish controls and compact rest timer remain legible on small phones.
+- Interactive controls have accessible names and sufficiently large touch targets.
+- Undo/removal prompts prevent unintended loss of performed sets.
+- Honest empty/loading/recovery/error states; no sample workout displayed as user activity.
+
+## Tests
+- Restart after every critical edit recovers the session accurately.
+- Double-finish generates one logical completion and one rotation advance.
+- Warm-up sets excluded from metrics that explicitly use only working sets.
+- Replace and reorder do not mutate program template or old sessions.
+- Cross-midnight, airplane mode, sync retries, device change and conflict scenarios are covered.
+
+
+==========================================================================================
+FILE: GWT-V2-FS-003.md
+==========================================================================================
+
+# GWT-V2-FS-003 — Exercise Library & Animated Demonstrations
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Purpose
+Offer an accessible, dependable exercise catalog with accurate text instructions and appropriately licensed demonstration media, while allowing custom exercises and historical preservation.
+
+## Functional requirements
+1. Ship a curated offline base catalog sufficient to browse and log core exercises without network access.
+2. Catalog entries expose stable IDs, display names, equipment, primary/secondary muscle groups, difficulty where justified, instructions, aliases, and source provenance.
+3. Search by name and alias, filter by muscle/equipment and show appropriate alternatives or related exercises.
+4. Exercise detail provides text-based form guidance and, when available, a GIF/video demonstration. Download or stream media on demand; don't assume all media can be bundled.
+5. Verify provider attribution, license/redistribution rights and allowed caching before using WGER or any alternative API/CDN. Catalog data and demonstration media may have different rights.
+6. Favorites and user-authored exercises work offline; custom exercises are user-owned, searchable and usable in programs and sessions.
+7. Merge providers using aliases/source IDs and reviewed deduplication, not name-only blind merges.
+8. Gracefully handle broken links, missing animations, provider rate limits and offline state; instructions remain available when media fails.
+9. Historical sessions store exercise-name/metadata snapshots; renaming or deleting a current exercise must not rewrite history.
+10. Never make provider-specific structures the only domain model. External APIs belong behind adapters.
+
+## Data fields
+Exercise ID, source provider/source ID, canonical name, aliases, muscle groups, equipment, movement category, instructions, custom/user scope, source/license metadata, media references, attribution, timestamps, deprecation/merge mapping.
+
+## UX acceptance
+- Exercise list, search, filters, favorites, detail and selection are responsive on Android and Web.
+- Loading skeleton/error/offline placeholders are truthful and accessible.
+- Demonstration media does not autoplay with sound and includes an accessible text alternative.
+- Users can choose an exercise from a session or plan without losing current state.
+
+## Tests
+- Offline catalog works without provider access.
+- Alias search and reviewed dedupe behave predictably.
+- Favorites/custom exercises survive restart and sync.
+- Missing/unlicensed media is never required for workout logging.
+- Session snapshots survive exercise provider changes or deletion.
+
+
+==========================================================================================
+FILE: GWT-V2-FS-004.md
+==========================================================================================
+
+# GWT-V2-FS-004 — History, Strength, Body & Consistency Analytics
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Purpose
+Give an accurate history and understandable progress metrics derived from actual performed workouts and explicit body-weight logs.
+
+## Requirements
+1. Browse session history by list and calendar, inspect a detailed session snapshot, and edit/delete a historical entry with confirmation and synchronization support.
+2. Strength progression supports per-exercise heaviest regular working load, working volume, optional estimated one-rep max and personal bests based on comparable sets/units.
+3. **Working volume** is the sum of completed regular working sets' `weight × reps`; warm-up and uncompleted sets are excluded from metrics labeled as working volume.
+4. **Estimated 1RM** may use the Epley formula `weight × (1 + reps / 30)` on eligible completed regular sets of 1–10 reps; communicate estimates, not certified maxima.
+5. Treat body-weight movements, assisted movements, machine loads and unilateral exercises carefully: do not make unsupported comparisons or invent external resistance.
+6. Body-weight entries are dated measurements, not automatic workout weight. Show a trend and a seven-day average using entries actually recorded; describe missing days plainly.
+7. BMI uses `weight_kg / height_m²`, based on explicit profile height and appropriate available measurement. Display as a general calculation, not a medical diagnosis.
+8. Consistency measures unique workout days, weekly goal adherence and streaks according to an explicit time-zone/calendar policy. Multiple sessions in one day count as one workout day for day-based streaks.
+9. Scheduled adherence distinguishes assigned sessions from actual finished ones; changes to historical sessions trigger recomputation but must never replay completion events or rotation updates.
+10. All analytics must be deterministic, testable, resilient to edits/deletions and computed from scoped user data.
+11. Progress UI includes Overview plus Strength, Body, Consistency and History sections; show honest empty states for insufficient data.
+
+## Formula / policy notes
+- Units should be converted into canonical numeric forms before comparability calculations.
+- For 7-day weight average, specify whether it is per-entry or per-day (recommend one representative daily value, then mean across days with data); disclose the calculation in UI.
+- Time zones: store UTC instants and user-local workout calendar dates; define how historical timezone changes are represented.
+- Historical deletes require tombstones for cloud synchronization and should remove deleted records from recomputed aggregates.
+
+## Acceptance tests
+- Completed sets drive volume; warm-up/incomplete sets excluded.
+- Epley calculation constrained to 1–10 reps and reasonable loads.
+- Changing a session updates analytics once, not scheduling/completion events.
+- Multiple sessions on one day do not inflate day streaks.
+- Body-weight missing days are not imputed into entries or fabricated.
+- Metric charts have labels, units, accessible data summaries and clear empty states.
+
+
+==========================================================================================
+FILE: GWT-V2-FS-005.md
+==========================================================================================
+
+# GWT-V2-FS-005 — Accounts, Verification & Offline Cloud Sync
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Purpose
+Securely identify users and preserve durable fitness records across devices without sacrificing offline logging.
+
+## Authentication
+1. Firebase Authentication supports email/password and Google Sign-In at launch.
+2. Email verification is required before cloud fitness-data access as established in the approved plan; explain restrictions and retry flows clearly. Google account email/verification behavior must be checked against provider claims, not assumed.
+3. No guest mode in the planned initial experience. Onboarding is skippable, and users can later edit profile/preferences.
+4. Account state survives app restart using supported auth persistence; logout switches identity safely and must never show another UID's cached private data.
+5. Secure session errors, provider cancellation, stale credentials, offline login constraints and account recovery must be handled.
+
+## Local-first data and sync
+1. Drift/SQLite holds authoritative local operational state, with a durable outbox of pending mutations; Firestore stores server-accepted cloud records.
+2. Use stable UUIDs, owner UID on every user aggregate, per-aggregate server-controlled revision and timestamps.
+3. Every meaningful write should atomically update local records and enqueue an idempotent sync operation.
+4. Offline app use must not depend on Firestore's separate client cache as a second competing write owner.
+5. Cloud mutations that require ordered revisions, workout completion/rotation, active-session leases or terminal deletion barriers must pass through a trusted backend rather than trusting client-calculated revisions.
+6. Ordinary noncritical aggregate conflicts may follow a documented latest-server-confirmed-edit policy; conflicting performed workout data must be preserved for recovery/manual resolution.
+7. Tombstones must prevent deleted cloud records from being resurrected after offline replay.
+8. Idempotent completion events must prevent duplicate streak/calendar/rotation effects.
+9. Connected active sessions should use an ownership/lease model; simultaneous disconnected sessions cannot be guaranteed mutually exclusive and require reconciliation.
+10. Bootstrap sync needs paginated changes, checkpoints/cursors, retry backoff, partial-failure handling and account isolation.
+11. UI displays honest local-save/sync/pending/conflict states.
+
+## Security / privacy
+- Restrictive Firestore security rules with automated emulator tests; all user data scoped under `users/{uid}` or equivalent verifiable ownership model.
+- Do not embed privileged server credentials in client code or commit config secrets.
+- Offer user-data export and a durable account deletion workflow that cleans cloud data and safely blocks stale offline writes.
+- Obtain explicit disclosure/consent for AI contextual processing when introduced later; AI not needed for initial authentication.
+- Evaluate Firebase configuration, API billing and trusted backend costs before launch.
+
+## Verification
+- Auth flow tests for email/password, verification, Google provider and cancellation.
+- Emulator tests reject unauthenticated access and cross-UID reads/writes.
+- Offline edits/retries/out-of-order replay do not duplicate records.
+- Conflict protection and deletion/tombstones are tested.
+- Account switching leaves no prior-account data visible.
+
+
+==========================================================================================
+FILE: GWT-V2-FS-006.md
+==========================================================================================
+
+# GWT-V2-FS-006 — Nutrition Tracking & Deferred AI Assistant
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Nutrition scope (planned launch)
+1. Daily food diary with breakfast/lunch/dinner/snacks (or configurable meal groupings), date selection, totals and macronutrient distribution.
+2. Use a curated local food catalog based on properly attributed USDA-derived records plus reviewed Nepalese dishes. Do not treat unverified community values as clinically exact.
+3. Food search supports aliases, portions and categories; catalog works for common foods offline.
+4. Custom user foods, saved meals, recipes, favorites/recent foods and quick-repeat logging.
+5. Quantities support grams, milliliters, pieces and explicitly calibrated household portions. Never silently convert a generic 'cup' to grams without food-specific density/serving data.
+6. Persist per-serving calories, protein, carbs and fat with suitable provenance, units, amount, rounding policy and data-quality flags.
+7. Goals can be entered manually; optionally offer calculated estimates with clearly stated assumptions, editability and no misleading certainty.
+8. Summary and trends should distinguish complete/partial diary days; no automatic assumption that an unlogged day means zero intake.
+9. Barcode scanning is part of initial Android functionality, subject to permissions and supported product/provider lookup. Web uses manual barcode entry fallback.
+10. Third-party product search, if enabled, must honor API terms, privacy and freshness; users can correct product nutrition or save custom versions.
+11. Offline diary logging must work; cloud sync should preserve user data, including meal/recipe snapshots, while handling conflict/deletion.
+
+## Deferred features — not initial release
+- AI fitness assistant, meal-photo identification and automated recommendations.
+- When AI assistant launches, user must knowingly enable contextual access; then relevant workout/nutrition context may be supplied automatically with transparent controls to disable/revoke it.
+- AI must never silently modify workout records, nutrition goals or personal data; user confirms suggested changes.
+- Use trusted backend proxy for provider secrets, quota/rate limiting, prompt privacy policies and safety boundaries.
+- Avoid presenting model-generated health or nutrition claims as verified clinical advice.
+
+## Data model notes
+- Food, FoodSource, FoodServing, BarcodeMapping, UserFood, SavedMeal, Recipe and RecipeIngredient.
+- DiaryEntry captures consumed quantity, meal category, local date, timestamp, nutrition snapshot and canonical source reference.
+- NutritionGoal supports a versioned effective date and manual/calculated origin.
+- Recipe changes should not retroactively alter old diary entries.
+
+## Acceptance tests
+- Quantity conversion accurate for known servings; unknown conversions ask for calibration.
+- Recipes and logged meal snapshots remain stable after later edits.
+- Barcode lookup handles missing/mismatched food data with manual fallback.
+- Daily totals differentiate missing/incomplete entries from zero intake.
+- Offline logging/retries, duplicates and cross-account isolation covered.
+- AI-enabled contextual sharing never occurs before user enablement.
+
+
+==========================================================================================
+FILE: GWT-V2-UX-002.md
+==========================================================================================
+
+# GWT-V2-UX-002 — UI/UX Blueprint
+
+> **Source status:** Reconstructed reference specification (2026-11-17), based on prior Gym Workout Tracker V2 planning summaries and handoff notes. It is **not** a verbatim recovery of the original finalized document. Review and approve against the original conversation before treating details as authoritative.
+
+## Product direction
+An Android-first, Web-responsive, fast-to-log fitness tracker. Design for real, durable user data; no fake personal records or decorative interactive screens that misrepresent functionality.
+
+## Design tokens (approved)
+| Token | Value | Application |
+|---|---|---|
+| Dark background | `#101114` | Primary scaffold |
+| Dark surface | `#1C1E23` | Cards, sheets, secondary areas |
+| Primary accent | `#FF6B00` | Actions, selected states, chart highlight |
+| Primary text | `#F3F4F6` | Content in dark mode |
+| Typography | Inter preferred | Consistent UI text |
+
+Use Material 3 with purposeful customization; ensure contrast, accessible labeling, clear focus, >=48px interactive touch targets where practical, reduced-motion consideration and safe areas. Default dark; optional light/system support later or as low-cost infrastructure.
+
+## App navigation
+Exactly five primary destinations: **Home, Workouts, Exercises, Progress, Nutrition**.
+- Profile/account accessed from an avatar/header affordance rather than a sixth bottom tab.
+- On phone: bottom navigation with persistent active-workout affordance.
+- On wider Web/tablet: navigation rail or sidebar and multi-column layouts.
+- Stateful tab navigation should preserve relevant scroll/route state; deep links and unknown routes recover gracefully.
+
+## Core screens and journeys
+### Home
+Personalized actual-data overview with today's planned workout, start/resume workout CTA, real consistency/progress highlights and honest empty states. Avoid demo data appearing as genuine statistics.
+
+### Workouts
+Programs overview, templates, program details, fixed/rotation calendar, program builder and active session. Builder uses **six-step wizard** to guide program details, training days/split, exercises, set targets, schedule and review/activation. Keep drafts recoverable.
+
+### Active workout
+Scroll through exercise cards; edit sets/reps/load/type, add/change/reorder exercises, view recent performance, keep compact rest timer visible, autosave and resume; explicit finish/discard/partial handling and sync indication.
+
+### Exercises
+Offline-searchable exercise catalog, muscle/equipment filters, favorites, details with instructions, correctly licensed demonstrations, alternatives, custom exercise creation and selection within program/workout flows.
+
+### Progress
+Overview plus **Strength**, **Body**, **Consistency**, **History**. Charts must show units and meaningful data definitions; gracefully handle sparse data and recalculations after edits.
+
+### Nutrition
+Diary by day/meal, search/add foods, serving-size editor, manual macro goals, recipes/saved meals, trends, camera barcode on Android and manual barcode fallback on Web.
+
+### Account/onboarding
+Sign in/up, verification, Google Sign-In, skippable onboarding, profile, preferences, sync status, export and account deletion. Clearly distinguish logged out, verification required, offline, sync conflict and destructive actions.
+
+### Future AI
+No AI tab in initial navigation. Feature remains deferred; if exposed later, user enablement and contextual-sharing disclosure are required.
+
+## UI states for every data screen
+Define loading, first-time empty, ordinary populated, offline saved, pending sync, conflict/recovery, input validation, recoverable error and irreversible/destructive confirmation. Never place permanently inert CTA buttons in a released flow.
+
+## Responsive behavior
+- Compact widths: vertical card hierarchy, bottom tabs, single-column forms and practical keyboard avoidance.
+- Medium widths: rail as space permits; two-column detail/layout where useful.
+- Large Web: extended rail/sidebar and multi-column dashboard while respecting readable line lengths.
+- Handle short-height windows; a width-only breakpoint must not produce unusable navigation.
+- Test physical Android interactions, Chrome keyboard/scroll behavior and eventually iOS via macOS/Xcode.
+
+## Acceptance review
+- Dark palette accurate on launch, including surface and scaffold.
+- All five tabs reachable and state preserved where intended.
+- Single prominent action per task; predictable back navigation.
+- App remains usable at small phone dimensions and wide screens.
+- Accurate, accessible charts and meaningful empty states.
+- Core workout logging can complete with poor connectivity.
+
+## Known code-alignment note (as reported November 17, 2026)
+An existing GoRouter stateful navigation shell, responsive bottom bar/rail and five sections were implemented provisionally; later the seed was corrected from purple to `#FF6B00` at commit `565c1cc`. This is *implementation context*, not proof that every UX screen above exists.
+
