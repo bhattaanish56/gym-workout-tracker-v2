@@ -7,6 +7,8 @@ import '../../domain/models/performed_exercise.dart' as domain;
 import '../../domain/models/performed_set.dart' as domain;
 import '../providers/workout_providers.dart';
 import '../../../exercises/presentation/widgets/exercise_picker_dialog.dart';
+import '../widgets/rest_timer_widget.dart';
+import '../widgets/rest_timer_notifier.dart';
 import '../../../programs/presentation/providers/program_providers.dart';
 import '../../../../core/domain/value_objects/weight.dart';
 import '../../../../core/domain/value_objects/identifiers.dart';
@@ -507,6 +509,7 @@ class ActiveWorkoutEditor extends ConsumerStatefulWidget {
 class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
   final _repsControllers = <String, TextEditingController>{};
   final _weightControllers = <String, TextEditingController>{};
+  final _restTimer = RestTimerNotifier();
   bool _isFinishing = false;
   DateTime? _startTime;
   Timer? _timer;
@@ -528,6 +531,7 @@ class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
   @override
   void dispose() {
     _timer?.cancel();
+    _restTimer.dispose();
     for (final c in _repsControllers.values) {
       c.dispose();
     }
@@ -539,22 +543,32 @@ class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
 
   TextEditingController _getRepsController(domain.PerformedSet set) {
     final key = set.id.value;
+    final currentValue = set.reps?.toString() ?? '';
+
     if (!_repsControllers.containsKey(key)) {
-      _repsControllers[key] = TextEditingController(
-        text: set.reps?.toString() ?? '',
-      );
+      _repsControllers[key] = TextEditingController(text: currentValue);
+    } else {
+      final controller = _repsControllers[key]!;
+      if (controller.text != currentValue && !controller.selection.isValid) {
+        controller.text = currentValue;
+      }
     }
     return _repsControllers[key]!;
   }
 
   TextEditingController _getWeightController(domain.PerformedSet set) {
     final key = set.id.value;
+    final currentValue = set.loadGrams != null
+        ? set.loadGrams!.displayValue(WeightUnit.kg).toString()
+        : '';
+
     if (!_weightControllers.containsKey(key)) {
-      _weightControllers[key] = TextEditingController(
-        text: set.loadGrams != null
-            ? set.loadGrams!.displayValue(WeightUnit.kg).toString()
-            : '',
-      );
+      _weightControllers[key] = TextEditingController(text: currentValue);
+    } else {
+      final controller = _weightControllers[key]!;
+      if (controller.text != currentValue && !controller.selection.isValid) {
+        controller.text = currentValue;
+      }
     }
     return _weightControllers[key]!;
   }
@@ -740,6 +754,8 @@ class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
                 ),
               ),
               const SizedBox(height: 12),
+              RestTimerWidget(notifier: _restTimer),
+              if (_restTimer.isActive) const SizedBox(height: 12),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -784,6 +800,7 @@ class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
                         notifier.removeExercise(exercise.id.value),
                     onUpdateSet: notifier.updateSet,
                     onRemoveSet: notifier.removeSet,
+                    onSetCompleted: () => _restTimer.start(90),
                     getRepsController: _getRepsController,
                     getWeightController: _getWeightController,
                   ),
@@ -804,6 +821,7 @@ class ExerciseCard extends StatelessWidget {
   final VoidCallback onRemoveExercise;
   final Future<void> Function(domain.PerformedSet) onUpdateSet;
   final Future<void> Function(String) onRemoveSet;
+  final VoidCallback? onSetCompleted;
   final TextEditingController Function(domain.PerformedSet) getRepsController;
   final TextEditingController Function(domain.PerformedSet) getWeightController;
 
@@ -815,6 +833,7 @@ class ExerciseCard extends StatelessWidget {
     required this.onRemoveExercise,
     required this.onUpdateSet,
     required this.onRemoveSet,
+    this.onSetCompleted,
     required this.getRepsController,
     required this.getWeightController,
   });
@@ -916,6 +935,7 @@ class ExerciseCard extends StatelessWidget {
                     index: index,
                     onUpdateSet: onUpdateSet,
                     onRemoveSet: onRemoveSet,
+                    onSetCompleted: onSetCompleted,
                     repsController: getRepsController(set),
                     weightController: getWeightController(set),
                   ),
@@ -942,6 +962,7 @@ class _SetRow extends StatelessWidget {
   final int index;
   final Future<void> Function(domain.PerformedSet) onUpdateSet;
   final Future<void> Function(String) onRemoveSet;
+  final VoidCallback? onSetCompleted;
   final TextEditingController repsController;
   final TextEditingController weightController;
 
@@ -950,6 +971,7 @@ class _SetRow extends StatelessWidget {
     required this.index,
     required this.onUpdateSet,
     required this.onRemoveSet,
+    this.onSetCompleted,
     required this.repsController,
     required this.weightController,
   });
@@ -1053,8 +1075,13 @@ class _SetRow extends StatelessWidget {
           height: 44,
           child: Checkbox(
             value: set.completed,
-            onChanged: (value) {
-              onUpdateSet(set.copyWith(completed: value ?? false));
+            onChanged: (value) async {
+              final wasCompleted = set.completed;
+              await onUpdateSet(set.copyWith(completed: value ?? false));
+
+              if (!wasCompleted && (value ?? false) && onSetCompleted != null) {
+                onSetCompleted!();
+              }
             },
           ),
         ),
