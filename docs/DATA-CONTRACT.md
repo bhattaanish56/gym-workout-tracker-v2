@@ -37,7 +37,7 @@ Define the Gym Workout Tracker V2 data model, integrity constraints, local/cloud
   - Calories: integer (no decimal places)
   - Protein/Carbs/Fat: stored as integer deci-grams (1 dg = 0.1g precision)
   - Conversion: `10.5g input → 105 stored; 105 → 10.5g display`
-- **Validation limits:** Workout resistance < 1,000,000g (1000 kg realistic max), Body weight 20,000g–300,000g (20–300 kg), Calories < 100,000 per entry
+- **Validation limits (provisional):** Application-level checks, not database constraints. Workout resistance < 1,000,000g (1000 kg), Body weight 20,000g–300,000g (20–300 kg), Calories < 100,000 per entry
 - **Never use binary float equality** for persisted fitness measurements; always compare as integers
 - **Rounding policy:** Display rounds to 0.1g for weights, 1g for macros; stored value is source of truth
 
