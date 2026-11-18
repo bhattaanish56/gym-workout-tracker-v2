@@ -3,6 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'app_shell.dart';
 import '../features/home/presentation/screens/home_screen.dart';
+import '../features/sessions/presentation/screens/workouts_screen.dart';
+import '../features/sessions/presentation/screens/workout_detail_screen.dart';
+import '../features/exercises/presentation/screens/exercises_screen.dart';
+import '../features/exercises/presentation/screens/exercise_detail_screen.dart';
+import '../features/programs/presentation/screens/programs_screen.dart';
+import '../features/programs/presentation/screens/program_detail_screen.dart';
+import '../features/programs/presentation/screens/program_day_editor_screen.dart';
+import '../features/programs/presentation/screens/program_builder_screen.dart';
+import '../features/progress/presentation/screens/progress_screen.dart';
 import '../shared/widgets/section_page.dart';
 
 GoRouter createAppRouter({String initialLocation = '/home'}) {
@@ -38,13 +47,58 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
                 path: '/workouts',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const SectionPage(
-                    key: Key('page-workouts'),
-                    title: 'Workouts',
-                    emptyMessage:
-                        'No workouts yet. Your sessions will appear here.',
-                  ),
+                  child: const WorkoutsScreen(key: Key('page-workouts')),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'programs',
+                    builder: (context, state) {
+                      return const ProgramsScreen(key: Key('page-programs'));
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'create',
+                        builder: (context, state) {
+                          return const ProgramBuilderScreen();
+                        },
+                      ),
+                      GoRoute(
+                        path: ':id',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id']!;
+                          return ProgramDetailScreen(programId: id);
+                        },
+                        routes: [
+                          GoRoute(
+                            path: 'edit',
+                            builder: (context, state) {
+                              final id = state.pathParameters['id']!;
+                              return ProgramBuilderScreen(programId: id);
+                            },
+                          ),
+                          GoRoute(
+                            path: 'days/:dayId',
+                            builder: (context, state) {
+                              final programId = state.pathParameters['id']!;
+                              final dayId = state.pathParameters['dayId']!;
+                              return ProgramDayEditorScreen(
+                                programId: programId,
+                                dayId: dayId,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return WorkoutDetailScreen(sessionId: id);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -54,13 +108,17 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
                 path: '/exercises',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const SectionPage(
-                    key: Key('page-exercises'),
-                    title: 'Exercises',
-                    emptyMessage:
-                        'No exercises saved yet. Your library will appear here.',
-                  ),
+                  child: const ExercisesScreen(key: Key('page-exercises')),
                 ),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final exercise = state.extra;
+                      return ExerciseDetailScreen(exercise: exercise);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -70,12 +128,7 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
                 path: '/progress',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const SectionPage(
-                    key: Key('page-progress'),
-                    title: 'Progress',
-                    emptyMessage:
-                        'No training history yet. Completed sessions will appear here.',
-                  ),
+                  child: const ProgressScreen(key: Key('page-progress')),
                 ),
               ),
             ],

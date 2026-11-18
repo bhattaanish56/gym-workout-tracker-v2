@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../core/presentation/providers/theme_provider.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -16,6 +18,20 @@ class AppShell extends StatelessWidget {
         final extendedRail = width >= 1200;
 
         return Scaffold(
+          appBar: AppBar(
+            actions: [
+              PopupMenuButton<void>(
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: const Text('Toggle Theme'),
+                    onTap: () {
+                      ref.read(themeModeProvider.notifier).toggleTheme();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
           body: SafeArea(
             child: Row(
               children: [

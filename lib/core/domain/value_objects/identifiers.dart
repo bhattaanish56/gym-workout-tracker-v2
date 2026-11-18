@@ -36,6 +36,39 @@ final class RecordId {
   String toString() => value;
 }
 
+/// Exercise identifier (stable ID for bundled or custom exercises).
+final class ExerciseId {
+  final String value;
+
+  const ExerciseId._(this.value);
+
+  /// Creates an ExerciseId from a validated string.
+  ///
+  /// Throws [InvalidIdentifierError] if:
+  /// - value is empty
+  /// - value contains only whitespace
+  factory ExerciseId(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      throw const InvalidIdentifierError('ExerciseId cannot be empty');
+    }
+    return ExerciseId._(trimmed);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExerciseId &&
+          runtimeType == other.runtimeType &&
+          value == other.value;
+
+  @override
+  int get hashCode => value.hashCode;
+
+  @override
+  String toString() => value;
+}
+
 /// Firebase Auth UID reference.
 ///
 /// Does not assume UIDs are UUIDs.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' hide isNull;
 
 import 'package:gym_workout_tracker_v2/main.dart' as app;
 import 'package:gym_workout_tracker_v2/app/router.dart';
@@ -26,6 +27,10 @@ void _setViewport(WidgetTester tester, Size size, {double scale = 1}) {
 }
 
 void main() {
+  setUpAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
   testWidgets('App bootstraps with ProviderScope and Home screen', (
     WidgetTester tester,
   ) async {
@@ -155,7 +160,7 @@ void main() {
 
   testWidgets('App supports explicit light mode', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp(themeMode: ThemeMode.light)),
+      const ProviderScope(child: app.MyApp()),
     );
     await tester.pumpAndSettle();
 
@@ -176,7 +181,7 @@ void main() {
     binding.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
 
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp(themeMode: ThemeMode.system)),
+      const ProviderScope(child: app.MyApp()),
     );
     await tester.pumpAndSettle();
 
@@ -196,7 +201,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp(themeMode: ThemeMode.dark)),
+      const ProviderScope(child: app.MyApp()),
     );
     await tester.pumpAndSettle();
 
@@ -219,7 +224,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp(themeMode: ThemeMode.light)),
+      const ProviderScope(child: app.MyApp()),
     );
     await tester.pumpAndSettle();
 
