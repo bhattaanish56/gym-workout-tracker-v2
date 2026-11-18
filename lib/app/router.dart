@@ -12,6 +12,7 @@ import '../features/programs/presentation/screens/program_detail_screen.dart';
 import '../features/programs/presentation/screens/program_day_editor_screen.dart';
 import '../features/programs/presentation/screens/program_builder_screen.dart';
 import '../features/progress/presentation/screens/progress_screen.dart';
+import '../features/nutrition/presentation/screens/nutrition_screen.dart';
 import '../shared/widgets/section_page.dart';
 
 GoRouter createAppRouter({String initialLocation = '/home'}) {
@@ -139,12 +140,7 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
                 path: '/nutrition',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const SectionPage(
-                    key: Key('page-nutrition'),
-                    title: 'Nutrition',
-                    emptyMessage:
-                        'No meals recorded yet. Your meal history will appear here.',
-                  ),
+                  child: const NutritionScreen(key: Key('page-nutrition')),
                 ),
               ),
             ],
