@@ -9,7 +9,9 @@ import '../providers/workout_providers.dart';
 import '../../../exercises/presentation/widgets/exercise_picker_dialog.dart';
 import '../widgets/rest_timer_widget.dart';
 import '../widgets/rest_timer_notifier.dart';
+import '../widgets/workout_completion_dialog.dart';
 import '../../../programs/presentation/providers/program_providers.dart';
+import '../../../progress/presentation/providers/progress_providers.dart';
 import '../../../../core/domain/value_objects/weight.dart';
 import '../../../../core/domain/value_objects/identifiers.dart';
 
@@ -604,11 +606,35 @@ class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
 
   Future<void> _finishWorkout() async {
     if (_isFinishing) return;
+
+    final activeWorkout = ref.read(activeWorkoutProvider);
+    final session = activeWorkout.session;
+    if (session == null) return;
+
+    final duration = DateTime.now().difference(session.startedAt);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => WorkoutCompletionDialog(
+        session: session,
+        exercises: activeWorkout.exercises,
+        setsByExercise: activeWorkout.setsByExercise,
+        duration: duration,
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     setState(() => _isFinishing = true);
 
     await ref.read(activeWorkoutProvider.notifier).finishWorkout();
 
     if (mounted && ref.read(activeWorkoutProvider).session == null) {
+      // Refresh providers to update history and stats
+      ref.invalidate(workoutHistoryProvider);
+      ref.invalidate(workoutStatsProvider);
+      ref.invalidate(streakProvider);
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Workout saved')));
