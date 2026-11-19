@@ -194,13 +194,12 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     label: const Text('All Equipment'),
                     selected: _equipmentFilter == null,
                     onSelected: (_) => setState(() => _equipmentFilter = null),
-                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                    side: _equipmentFilter == null
-                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
-                        : null,
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: const Color(0xFFFF6B00),
                     labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurface,
+                      color: _equipmentFilter == null
+                          ? Colors.white
+                          : theme.colorScheme.onSurface,
                       fontWeight: _equipmentFilter == null ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -209,13 +208,12 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     label: const Text('Barbell'),
                     selected: _equipmentFilter == Equipment.barbell,
                     onSelected: (_) => setState(() => _equipmentFilter = Equipment.barbell),
-                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                    side: _equipmentFilter == Equipment.barbell
-                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
-                        : null,
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: const Color(0xFFFF6B00),
                     labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurface,
+                      color: _equipmentFilter == Equipment.barbell
+                          ? Colors.white
+                          : theme.colorScheme.onSurface,
                       fontWeight: _equipmentFilter == Equipment.barbell ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -224,13 +222,12 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     label: const Text('Dumbbell'),
                     selected: _equipmentFilter == Equipment.dumbbell,
                     onSelected: (_) => setState(() => _equipmentFilter = Equipment.dumbbell),
-                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                    side: _equipmentFilter == Equipment.dumbbell
-                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
-                        : null,
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: const Color(0xFFFF6B00),
                     labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurface,
+                      color: _equipmentFilter == Equipment.dumbbell
+                          ? Colors.white
+                          : theme.colorScheme.onSurface,
                       fontWeight: _equipmentFilter == Equipment.dumbbell ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -239,13 +236,12 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     label: const Text('Bodyweight'),
                     selected: _equipmentFilter == Equipment.bodyweight,
                     onSelected: (_) => setState(() => _equipmentFilter = Equipment.bodyweight),
-                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                    side: _equipmentFilter == Equipment.bodyweight
-                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
-                        : null,
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: const Color(0xFFFF6B00),
                     labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurface,
+                      color: _equipmentFilter == Equipment.bodyweight
+                          ? Colors.white
+                          : theme.colorScheme.onSurface,
                       fontWeight: _equipmentFilter == Equipment.bodyweight ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -293,7 +289,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     );
                   }
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                     itemCount: exercises.length,
                     itemBuilder: (context, index) {
                       final exercise = exercises[index];

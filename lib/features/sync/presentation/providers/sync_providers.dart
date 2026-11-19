@@ -8,6 +8,7 @@ import '../../data/sync_coordinator.dart';
 import '../../data/sync_queue_repository.dart';
 import '../../data/data_restore_service.dart';
 import '../../domain/models/sync_operation.dart';
+import '../../domain/sync_hooks.dart';
 
 final firestoreSyncServiceProvider = Provider<FirestoreSyncService?>((ref) {
   final user = ref.watch(currentUserProvider);
@@ -35,6 +36,11 @@ final syncCoordinatorProvider = Provider<SyncCoordinator?>((ref) {
   });
 
   return coordinator;
+});
+
+final syncHooksProvider = Provider<SyncHooks?>((ref) {
+  final coordinator = ref.watch(syncCoordinatorProvider);
+  return SyncHooks(coordinator);
 });
 
 final dataRestoreServiceProvider = Provider<DataRestoreService?>((ref) {

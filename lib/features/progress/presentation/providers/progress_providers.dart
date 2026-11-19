@@ -118,3 +118,8 @@ final exerciseProgressProvider =
 
       return {'heaviest': heaviest, 'oneRepMax': oneRepMax, 'history': history};
     });
+
+final exercisesWithHistoryProvider = FutureProvider<List<String>>((ref) async {
+  final analytics = ref.watch(progressAnalyticsProvider);
+  return analytics.getExerciseIdsWithHistory();
+});

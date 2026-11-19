@@ -3,12 +3,15 @@ import '../../../../core/domain/value_objects/identifiers.dart';
 import '../../../../core/domain/value_objects/date_time.dart';
 import '../../../sessions/data/database/app_database.dart';
 import '../../domain/models/bodyweight_entry.dart' as domain;
+import '../../../sync/domain/sync_hooks.dart';
+import '../../../sync/data/firestore_serializer.dart';
 
 class DriftProgressRepository {
   final AppDatabase _db;
   final String userId;
+  final SyncHooks? _syncHooks;
 
-  DriftProgressRepository(this._db, this.userId);
+  DriftProgressRepository(this._db, this.userId, [this._syncHooks]);
 
   Future<void> addBodyWeight({
     required RecordId id,
@@ -30,6 +33,20 @@ class DriftProgressRepository {
             createdAt: DateTime.now().toUtc(),
           ),
         );
+
+    // Sync to cloud if available
+    if (_syncHooks != null) {
+      final entry = domain.BodyWeightEntry(
+        id: id,
+        weightGrams: weightGrams,
+        measuredAt: measuredAt,
+        measuredDate: measuredDate,
+        notes: notes,
+        createdAt: DateTime.now().toUtc(),
+      );
+      final data = FirestoreSerializer.serializeBodyWeight(entry);
+      await _syncHooks.onBodyWeightCreated(id.value, data);
+    }
   }
 
   Future<void> updateBodyWeight({

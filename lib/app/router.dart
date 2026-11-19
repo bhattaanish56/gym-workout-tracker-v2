@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,25 +23,90 @@ import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/profile_screen.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
+import '../features/onboarding/presentation/screens/onboarding_coordinator_screen.dart';
+import '../features/onboarding/presentation/screens/fitness_settings_screen.dart';
+import '../features/onboarding/presentation/providers/onboarding_providers.dart';
 import '../shared/widgets/section_page.dart';
+import '../core/debug/auth_diagnostics.dart';
 
 GoRouter createAppRouter(Ref ref) {
   return GoRouter(
     initialLocation: '/home',
     redirect: (context, state) {
+      if (kDebugMode) {
+        debugPrint('=== REDIRECT START ===');
+        debugPrint('InitialLocation (config): /home');
+        debugPrint('State.uri: ${state.uri}');
+        debugPrint('State.matchedLocation: ${state.matchedLocation}');
+        debugPrint('State.fullPath: ${state.fullPath}');
+      }
+
       final user = ref.read(authRepositoryProvider).currentUser;
       final isAuthenticated = user != null;
       final isAuthRoute = state.matchedLocation.startsWith('/welcome') ||
           state.matchedLocation.startsWith('/login') ||
           state.matchedLocation.startsWith('/register') ||
           state.matchedLocation.startsWith('/forgot-password');
+      final isOnboardingRoute = state.matchedLocation == '/onboarding';
+
+      if (kDebugMode) {
+        AuthDiagnostics.logAuthState(
+          'Router redirect check',
+          uid: user?.uid,
+          email: user?.email,
+          displayName: user?.displayName,
+          isAnonymous: user?.isAnonymous,
+        );
+        debugPrint('isAuthenticated: $isAuthenticated');
+        debugPrint('isAuthRoute: $isAuthRoute');
+        debugPrint('isOnboardingRoute: $isOnboardingRoute');
+      }
 
       if (!isAuthenticated && !isAuthRoute) {
+        if (kDebugMode) debugPrint('REDIRECT DECISION: /welcome (not authenticated)');
         return '/welcome';
       }
+
       if (isAuthenticated && isAuthRoute) {
-        return '/home';
+        // Check onboarding completion after auth success using provider
+        final hasCompletedResult = ref.read(hasCompletedOnboardingProvider);
+        final shouldRedirect = hasCompletedResult.maybeWhen(
+          data: (completed) => !completed,
+          orElse: () => false, // Allow navigation while loading
+        );
+        if (kDebugMode) {
+          debugPrint('Onboarding status (from auth route): $hasCompletedResult');
+          debugPrint('shouldRedirect to onboarding: $shouldRedirect');
+        }
+        if (shouldRedirect) {
+          if (kDebugMode) debugPrint('REDIRECT DECISION: /onboarding');
+          return '/onboarding';
+        }
+        // Don't return /home - let it fall through to navigate naturally
+        if (kDebugMode) debugPrint('REDIRECT DECISION: null (authenticated, onboarding complete)');
+        return null;
       }
+
+      // Check onboarding for authenticated users navigating to non-auth, non-onboarding routes
+      if (isAuthenticated && !isOnboardingRoute && !isAuthRoute) {
+        final hasCompletedResult = ref.read(hasCompletedOnboardingProvider);
+        final shouldRedirectToOnboarding = hasCompletedResult.maybeWhen(
+          data: (completed) => !completed,
+          orElse: () => false, // Don't block navigation while loading
+        );
+
+        if (kDebugMode) {
+          debugPrint('Onboarding status (from app route): $hasCompletedResult');
+          debugPrint('shouldRedirectToOnboarding: $shouldRedirectToOnboarding');
+        }
+
+        if (shouldRedirectToOnboarding) {
+          if (kDebugMode) debugPrint('REDIRECT DECISION: /onboarding');
+          return '/onboarding';
+        }
+      }
+
+      if (kDebugMode) debugPrint('REDIRECT DECISION: null (no redirect needed)');
       return null;
     },
     refreshListenable: GoRouterRefreshStream(
@@ -66,6 +132,14 @@ GoRouter createAppRouter(Ref ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingCoordinatorScreen(),
+      ),
+      GoRoute(
+        path: '/fitness-settings',
+        builder: (context, state) => const FitnessSettingsScreen(),
       ),
       GoRoute(path: '/', redirect: (context, state) => '/home'),
       StatefulShellRoute.indexedStack(
@@ -205,21 +279,38 @@ GoRouter createAppRouter(Ref ref) {
         ],
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      body: PageFrame(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Semantics(header: true, child: const Text('Page not found')),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () => context.go('/home'),
-              child: const Text('Home'),
-            ),
-          ],
+    errorBuilder: (context, state) {
+      if (kDebugMode) {
+        debugPrint('=== GOROUTER ERROR ===');
+        debugPrint('Error: ${state.error}');
+        debugPrint('Uri: ${state.uri}');
+        debugPrint('MatchedLocation: ${state.matchedLocation}');
+        debugPrint('FullPath: ${state.fullPath}');
+        debugPrint('PathParameters: ${state.pathParameters}');
+        debugPrint('======================');
+      }
+      return Scaffold(
+        body: PageFrame(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Semantics(header: true, child: const Text('Page not found')),
+              const SizedBox(height: 8),
+              if (kDebugMode) ...[
+                Text('Error: ${state.error}'),
+                Text('Uri: ${state.uri}'),
+                Text('MatchedLocation: ${state.matchedLocation}'),
+                const SizedBox(height: 8),
+              ],
+              FilledButton(
+                onPressed: () => context.go('/home'),
+                child: const Text('Home'),
+              ),
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 

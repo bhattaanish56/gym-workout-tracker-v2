@@ -163,6 +163,21 @@ class BodyWeightEntries extends Table {
 class UserProfile extends Table {
   TextColumn get userId => text()(); // Profile belongs to this user
   IntColumn get heightCm => integer().nullable()();
+  DateTimeColumn get dateOfBirth => dateTime().nullable()();
+  TextColumn get gender => text().nullable()(); // Optional
+  IntColumn get currentWeightGrams => integer().nullable()();
+  IntColumn get goalWeightGrams => integer().nullable()();
+  TextColumn get fitnessGoal => text().nullable()(); // 'gain_muscle', 'lose_fat', 'maintain', 'improve_strength'
+  TextColumn get experienceLevel => text().nullable()(); // 'beginner', 'intermediate', 'advanced'
+  TextColumn get activityLevel => text().nullable()(); // 'sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'
+  IntColumn get workoutDaysPerWeek => integer().nullable()();
+  TextColumn get trainingLocation => text().nullable()(); // 'gym', 'home', 'both'
+  TextColumn get equipment => text().nullable()(); // Comma-separated
+  BoolColumn get hasCompletedOnboarding => boolean().withDefault(const Constant(false))();
+  IntColumn get maintenanceCalories => integer().nullable()();
+  IntColumn get targetCalories => integer().nullable()();
+  IntColumn get targetProteinGrams => integer().nullable()();
+  DateTimeColumn get onboardingCompletedAt => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override
@@ -208,7 +223,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withQueryExecutor(super.e);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration {
@@ -271,6 +286,30 @@ class AppDatabase extends _$AppDatabase {
         // v8 -> v9: Add sync operations queue
         if (from <= 8 && to >= 9) {
           await m.createTable(syncOperations);
+        }
+        // v9 -> v10: Add onboarding fields to UserProfile
+        if (from <= 9 && to >= 10) {
+          try {
+            await m.addColumn(userProfile, userProfile.dateOfBirth);
+            await m.addColumn(userProfile, userProfile.gender);
+            await m.addColumn(userProfile, userProfile.currentWeightGrams);
+            await m.addColumn(userProfile, userProfile.goalWeightGrams);
+            await m.addColumn(userProfile, userProfile.fitnessGoal);
+            await m.addColumn(userProfile, userProfile.experienceLevel);
+            await m.addColumn(userProfile, userProfile.activityLevel);
+            await m.addColumn(userProfile, userProfile.workoutDaysPerWeek);
+            await m.addColumn(userProfile, userProfile.trainingLocation);
+            await m.addColumn(userProfile, userProfile.equipment);
+            await m.addColumn(userProfile, userProfile.hasCompletedOnboarding);
+            await m.addColumn(userProfile, userProfile.maintenanceCalories);
+            await m.addColumn(userProfile, userProfile.targetCalories);
+            await m.addColumn(userProfile, userProfile.targetProteinGrams);
+            await m.addColumn(userProfile, userProfile.onboardingCompletedAt);
+          } catch (e) {
+            if (!e.toString().contains('duplicate column')) {
+              rethrow;
+            }
+          }
         }
       },
       beforeOpen: (details) async {

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../domain/models/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/debug/auth_diagnostics.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
   final FirebaseAuth _firebaseAuth;
@@ -67,6 +68,13 @@ class FirebaseAuthRepository implements AuthRepository {
         email: email,
         password: password,
       );
+      AuthDiagnostics.logAuthState(
+        'Sign-in with email successful',
+        uid: credential.user?.uid,
+        email: credential.user?.email,
+        displayName: credential.user?.displayName,
+        isAnonymous: credential.user?.isAnonymous,
+      );
       return _convertUser(credential.user)!;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
@@ -79,6 +87,13 @@ class FirebaseAuthRepository implements AuthRepository {
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
+      );
+      AuthDiagnostics.logAuthState(
+        'Sign-up with email successful',
+        uid: credential.user?.uid,
+        email: credential.user?.email,
+        displayName: credential.user?.displayName,
+        isAnonymous: credential.user?.isAnonymous,
       );
       return _convertUser(credential.user)!;
     } on FirebaseAuthException catch (e) {
@@ -104,6 +119,13 @@ class FirebaseAuthRepository implements AuthRepository {
 
       final userCredential =
           await _firebaseAuth.signInWithCredential(credential);
+      AuthDiagnostics.logAuthState(
+        'Sign-in with Google successful',
+        uid: userCredential.user?.uid,
+        email: userCredential.user?.email,
+        displayName: userCredential.user?.displayName,
+        isAnonymous: userCredential.user?.isAnonymous,
+      );
       return _convertUser(userCredential.user)!;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
@@ -116,6 +138,13 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<AppUser> signInAnonymously() async {
     try {
       final credential = await _firebaseAuth.signInAnonymously();
+      AuthDiagnostics.logAuthState(
+        'Anonymous sign-in successful',
+        uid: credential.user?.uid,
+        email: credential.user?.email,
+        displayName: credential.user?.displayName,
+        isAnonymous: credential.user?.isAnonymous,
+      );
       return _convertUser(credential.user)!;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
@@ -124,10 +153,13 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
-    await Future.wait([
-      _firebaseAuth.signOut(),
-      _googleSignIn.signOut(),
-    ]);
+    AuthDiagnostics.logAuthState('Sign-out', uid: null);
+    try {
+      await _googleSignIn.signOut();
+    } catch (e) {
+      // Ignore GoogleSignIn errors if not signed in via Google
+    }
+    await _firebaseAuth.signOut();
   }
 
   @override

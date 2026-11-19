@@ -475,51 +475,88 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     final theme = Theme.of(context);
     final selectedExerciseId = ref.watch(selectedExerciseIdProvider);
     final exercisesAsync = ref.watch(exerciseSearchProvider(ExerciseSearchParams()));
+    final exercisesWithHistoryAsync = ref.watch(exercisesWithHistoryProvider);
 
     return exercisesAsync.when(
-      data: (exercises) {
-        String? selectedName;
-        if (selectedExerciseId != null) {
-          final match = exercises
-              .where((e) {
-                final id = e is Exercise ? e.id : (e as CustomExercise).id.value;
-                return id == selectedExerciseId;
-              })
-              .firstOrNull;
-          if (match != null) {
-            selectedName = match is Exercise ? match.canonicalName : (match as CustomExercise).name;
-          }
-        }
-
-        return PopupMenuButton<String>(
-          onSelected: (exerciseId) {
-            ref.read(selectedExerciseIdProvider.notifier).setExercise(exerciseId);
-          },
-          itemBuilder: (context) => exercises.take(20).map((exercise) {
-            final id = exercise is Exercise ? exercise.id : (exercise as CustomExercise).id.value;
-            final name = exercise is Exercise ? exercise.canonicalName : (exercise as CustomExercise).name;
-            return PopupMenuItem(value: id, child: Text(name));
-          }).toList(),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  selectedName ?? 'Select Exercise',
-                  style: theme.textTheme.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      data: (allExercises) {
+        return exercisesWithHistoryAsync.when(
+          data: (exerciseIdsWithHistory) {
+            if (exerciseIdsWithHistory.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                const SizedBox(width: 2),
-                const Icon(Icons.arrow_drop_down, size: 16),
-              ],
-            ),
-          ),
+                child: Text(
+                  'No exercises with data yet',
+                  style: theme.textTheme.bodySmall,
+                ),
+              );
+            }
+
+            // Filter exercises to only those with history
+            final exercisesWithData = allExercises.where((exercise) {
+              final id = exercise is Exercise ? exercise.id : (exercise as CustomExercise).id.value;
+              return exerciseIdsWithHistory.contains(id);
+            }).toList();
+
+            // Set default to bench press if it has history, otherwise first exercise
+            if (selectedExerciseId == null || !exerciseIdsWithHistory.contains(selectedExerciseId)) {
+              final defaultId = exerciseIdsWithHistory.contains('ex_bench_press_barbell')
+                  ? 'ex_bench_press_barbell'
+                  : exerciseIdsWithHistory.first;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ref.read(selectedExerciseIdProvider.notifier).setExercise(defaultId);
+              });
+            }
+
+            String? selectedName;
+            if (selectedExerciseId != null) {
+              final match = exercisesWithData
+                  .where((e) {
+                    final id = e is Exercise ? e.id : (e as CustomExercise).id.value;
+                    return id == selectedExerciseId;
+                  })
+                  .firstOrNull;
+              if (match != null) {
+                selectedName = match is Exercise ? match.canonicalName : (match as CustomExercise).name;
+              }
+            }
+
+            return PopupMenuButton<String>(
+              onSelected: (exerciseId) {
+                ref.read(selectedExerciseIdProvider.notifier).setExercise(exerciseId);
+              },
+              itemBuilder: (context) => exercisesWithData.map((exercise) {
+                final id = exercise is Exercise ? exercise.id : (exercise as CustomExercise).id.value;
+                final name = exercise is Exercise ? exercise.canonicalName : (exercise as CustomExercise).name;
+                return PopupMenuItem(value: id, child: Text(name));
+              }).toList(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      selectedName ?? 'Select Exercise',
+                      style: theme.textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(Icons.arrow_drop_down, size: 16),
+                  ],
+                ),
+              ),
+            );
+          },
+          loading: () => const SizedBox(width: 100, height: 24, child: LinearProgressIndicator()),
+          error: (e, st) => const Text('Error'),
         );
       },
       loading: () => const SizedBox(width: 100, height: 24, child: LinearProgressIndicator()),

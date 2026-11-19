@@ -4896,6 +4896,169 @@ class $UserProfileTable extends UserProfile
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _dateOfBirthMeta = const VerificationMeta(
+    'dateOfBirth',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateOfBirth = GeneratedColumn<DateTime>(
+    'date_of_birth',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _genderMeta = const VerificationMeta('gender');
+  @override
+  late final GeneratedColumn<String> gender = GeneratedColumn<String>(
+    'gender',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currentWeightGramsMeta =
+      const VerificationMeta('currentWeightGrams');
+  @override
+  late final GeneratedColumn<int> currentWeightGrams = GeneratedColumn<int>(
+    'current_weight_grams',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _goalWeightGramsMeta = const VerificationMeta(
+    'goalWeightGrams',
+  );
+  @override
+  late final GeneratedColumn<int> goalWeightGrams = GeneratedColumn<int>(
+    'goal_weight_grams',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fitnessGoalMeta = const VerificationMeta(
+    'fitnessGoal',
+  );
+  @override
+  late final GeneratedColumn<String> fitnessGoal = GeneratedColumn<String>(
+    'fitness_goal',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _experienceLevelMeta = const VerificationMeta(
+    'experienceLevel',
+  );
+  @override
+  late final GeneratedColumn<String> experienceLevel = GeneratedColumn<String>(
+    'experience_level',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _activityLevelMeta = const VerificationMeta(
+    'activityLevel',
+  );
+  @override
+  late final GeneratedColumn<String> activityLevel = GeneratedColumn<String>(
+    'activity_level',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _workoutDaysPerWeekMeta =
+      const VerificationMeta('workoutDaysPerWeek');
+  @override
+  late final GeneratedColumn<int> workoutDaysPerWeek = GeneratedColumn<int>(
+    'workout_days_per_week',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _trainingLocationMeta = const VerificationMeta(
+    'trainingLocation',
+  );
+  @override
+  late final GeneratedColumn<String> trainingLocation = GeneratedColumn<String>(
+    'training_location',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _equipmentMeta = const VerificationMeta(
+    'equipment',
+  );
+  @override
+  late final GeneratedColumn<String> equipment = GeneratedColumn<String>(
+    'equipment',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _hasCompletedOnboardingMeta =
+      const VerificationMeta('hasCompletedOnboarding');
+  @override
+  late final GeneratedColumn<bool> hasCompletedOnboarding =
+      GeneratedColumn<bool>(
+        'has_completed_onboarding',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("has_completed_onboarding" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _maintenanceCaloriesMeta =
+      const VerificationMeta('maintenanceCalories');
+  @override
+  late final GeneratedColumn<int> maintenanceCalories = GeneratedColumn<int>(
+    'maintenance_calories',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetCaloriesMeta = const VerificationMeta(
+    'targetCalories',
+  );
+  @override
+  late final GeneratedColumn<int> targetCalories = GeneratedColumn<int>(
+    'target_calories',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetProteinGramsMeta =
+      const VerificationMeta('targetProteinGrams');
+  @override
+  late final GeneratedColumn<int> targetProteinGrams = GeneratedColumn<int>(
+    'target_protein_grams',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _onboardingCompletedAtMeta =
+      const VerificationMeta('onboardingCompletedAt');
+  @override
+  late final GeneratedColumn<DateTime> onboardingCompletedAt =
+      GeneratedColumn<DateTime>(
+        'onboarding_completed_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -4908,7 +5071,26 @@ class $UserProfileTable extends UserProfile
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [userId, heightCm, updatedAt];
+  List<GeneratedColumn> get $columns => [
+    userId,
+    heightCm,
+    dateOfBirth,
+    gender,
+    currentWeightGrams,
+    goalWeightGrams,
+    fitnessGoal,
+    experienceLevel,
+    activityLevel,
+    workoutDaysPerWeek,
+    trainingLocation,
+    equipment,
+    hasCompletedOnboarding,
+    maintenanceCalories,
+    targetCalories,
+    targetProteinGrams,
+    onboardingCompletedAt,
+    updatedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -4933,6 +5115,135 @@ class $UserProfileTable extends UserProfile
       context.handle(
         _heightCmMeta,
         heightCm.isAcceptableOrUnknown(data['height_cm']!, _heightCmMeta),
+      );
+    }
+    if (data.containsKey('date_of_birth')) {
+      context.handle(
+        _dateOfBirthMeta,
+        dateOfBirth.isAcceptableOrUnknown(
+          data['date_of_birth']!,
+          _dateOfBirthMeta,
+        ),
+      );
+    }
+    if (data.containsKey('gender')) {
+      context.handle(
+        _genderMeta,
+        gender.isAcceptableOrUnknown(data['gender']!, _genderMeta),
+      );
+    }
+    if (data.containsKey('current_weight_grams')) {
+      context.handle(
+        _currentWeightGramsMeta,
+        currentWeightGrams.isAcceptableOrUnknown(
+          data['current_weight_grams']!,
+          _currentWeightGramsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('goal_weight_grams')) {
+      context.handle(
+        _goalWeightGramsMeta,
+        goalWeightGrams.isAcceptableOrUnknown(
+          data['goal_weight_grams']!,
+          _goalWeightGramsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('fitness_goal')) {
+      context.handle(
+        _fitnessGoalMeta,
+        fitnessGoal.isAcceptableOrUnknown(
+          data['fitness_goal']!,
+          _fitnessGoalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('experience_level')) {
+      context.handle(
+        _experienceLevelMeta,
+        experienceLevel.isAcceptableOrUnknown(
+          data['experience_level']!,
+          _experienceLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('activity_level')) {
+      context.handle(
+        _activityLevelMeta,
+        activityLevel.isAcceptableOrUnknown(
+          data['activity_level']!,
+          _activityLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('workout_days_per_week')) {
+      context.handle(
+        _workoutDaysPerWeekMeta,
+        workoutDaysPerWeek.isAcceptableOrUnknown(
+          data['workout_days_per_week']!,
+          _workoutDaysPerWeekMeta,
+        ),
+      );
+    }
+    if (data.containsKey('training_location')) {
+      context.handle(
+        _trainingLocationMeta,
+        trainingLocation.isAcceptableOrUnknown(
+          data['training_location']!,
+          _trainingLocationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('equipment')) {
+      context.handle(
+        _equipmentMeta,
+        equipment.isAcceptableOrUnknown(data['equipment']!, _equipmentMeta),
+      );
+    }
+    if (data.containsKey('has_completed_onboarding')) {
+      context.handle(
+        _hasCompletedOnboardingMeta,
+        hasCompletedOnboarding.isAcceptableOrUnknown(
+          data['has_completed_onboarding']!,
+          _hasCompletedOnboardingMeta,
+        ),
+      );
+    }
+    if (data.containsKey('maintenance_calories')) {
+      context.handle(
+        _maintenanceCaloriesMeta,
+        maintenanceCalories.isAcceptableOrUnknown(
+          data['maintenance_calories']!,
+          _maintenanceCaloriesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('target_calories')) {
+      context.handle(
+        _targetCaloriesMeta,
+        targetCalories.isAcceptableOrUnknown(
+          data['target_calories']!,
+          _targetCaloriesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('target_protein_grams')) {
+      context.handle(
+        _targetProteinGramsMeta,
+        targetProteinGrams.isAcceptableOrUnknown(
+          data['target_protein_grams']!,
+          _targetProteinGramsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('onboarding_completed_at')) {
+      context.handle(
+        _onboardingCompletedAtMeta,
+        onboardingCompletedAt.isAcceptableOrUnknown(
+          data['onboarding_completed_at']!,
+          _onboardingCompletedAtMeta,
+        ),
       );
     }
     if (data.containsKey('updated_at')) {
@@ -4960,6 +5271,66 @@ class $UserProfileTable extends UserProfile
         DriftSqlType.int,
         data['${effectivePrefix}height_cm'],
       ),
+      dateOfBirth: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_of_birth'],
+      ),
+      gender: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gender'],
+      ),
+      currentWeightGrams: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}current_weight_grams'],
+      ),
+      goalWeightGrams: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_weight_grams'],
+      ),
+      fitnessGoal: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fitness_goal'],
+      ),
+      experienceLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}experience_level'],
+      ),
+      activityLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}activity_level'],
+      ),
+      workoutDaysPerWeek: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}workout_days_per_week'],
+      ),
+      trainingLocation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}training_location'],
+      ),
+      equipment: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}equipment'],
+      ),
+      hasCompletedOnboarding: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}has_completed_onboarding'],
+      )!,
+      maintenanceCalories: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}maintenance_calories'],
+      ),
+      targetCalories: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_calories'],
+      ),
+      targetProteinGrams: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_protein_grams'],
+      ),
+      onboardingCompletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}onboarding_completed_at'],
+      ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -4976,10 +5347,40 @@ class $UserProfileTable extends UserProfile
 class UserProfileData extends DataClass implements Insertable<UserProfileData> {
   final String userId;
   final int? heightCm;
+  final DateTime? dateOfBirth;
+  final String? gender;
+  final int? currentWeightGrams;
+  final int? goalWeightGrams;
+  final String? fitnessGoal;
+  final String? experienceLevel;
+  final String? activityLevel;
+  final int? workoutDaysPerWeek;
+  final String? trainingLocation;
+  final String? equipment;
+  final bool hasCompletedOnboarding;
+  final int? maintenanceCalories;
+  final int? targetCalories;
+  final int? targetProteinGrams;
+  final DateTime? onboardingCompletedAt;
   final DateTime updatedAt;
   const UserProfileData({
     required this.userId,
     this.heightCm,
+    this.dateOfBirth,
+    this.gender,
+    this.currentWeightGrams,
+    this.goalWeightGrams,
+    this.fitnessGoal,
+    this.experienceLevel,
+    this.activityLevel,
+    this.workoutDaysPerWeek,
+    this.trainingLocation,
+    this.equipment,
+    required this.hasCompletedOnboarding,
+    this.maintenanceCalories,
+    this.targetCalories,
+    this.targetProteinGrams,
+    this.onboardingCompletedAt,
     required this.updatedAt,
   });
   @override
@@ -4988,6 +5389,51 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     map['user_id'] = Variable<String>(userId);
     if (!nullToAbsent || heightCm != null) {
       map['height_cm'] = Variable<int>(heightCm);
+    }
+    if (!nullToAbsent || dateOfBirth != null) {
+      map['date_of_birth'] = Variable<DateTime>(dateOfBirth);
+    }
+    if (!nullToAbsent || gender != null) {
+      map['gender'] = Variable<String>(gender);
+    }
+    if (!nullToAbsent || currentWeightGrams != null) {
+      map['current_weight_grams'] = Variable<int>(currentWeightGrams);
+    }
+    if (!nullToAbsent || goalWeightGrams != null) {
+      map['goal_weight_grams'] = Variable<int>(goalWeightGrams);
+    }
+    if (!nullToAbsent || fitnessGoal != null) {
+      map['fitness_goal'] = Variable<String>(fitnessGoal);
+    }
+    if (!nullToAbsent || experienceLevel != null) {
+      map['experience_level'] = Variable<String>(experienceLevel);
+    }
+    if (!nullToAbsent || activityLevel != null) {
+      map['activity_level'] = Variable<String>(activityLevel);
+    }
+    if (!nullToAbsent || workoutDaysPerWeek != null) {
+      map['workout_days_per_week'] = Variable<int>(workoutDaysPerWeek);
+    }
+    if (!nullToAbsent || trainingLocation != null) {
+      map['training_location'] = Variable<String>(trainingLocation);
+    }
+    if (!nullToAbsent || equipment != null) {
+      map['equipment'] = Variable<String>(equipment);
+    }
+    map['has_completed_onboarding'] = Variable<bool>(hasCompletedOnboarding);
+    if (!nullToAbsent || maintenanceCalories != null) {
+      map['maintenance_calories'] = Variable<int>(maintenanceCalories);
+    }
+    if (!nullToAbsent || targetCalories != null) {
+      map['target_calories'] = Variable<int>(targetCalories);
+    }
+    if (!nullToAbsent || targetProteinGrams != null) {
+      map['target_protein_grams'] = Variable<int>(targetProteinGrams);
+    }
+    if (!nullToAbsent || onboardingCompletedAt != null) {
+      map['onboarding_completed_at'] = Variable<DateTime>(
+        onboardingCompletedAt,
+      );
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -4999,6 +5445,49 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
       heightCm: heightCm == null && nullToAbsent
           ? const Value.absent()
           : Value(heightCm),
+      dateOfBirth: dateOfBirth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateOfBirth),
+      gender: gender == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gender),
+      currentWeightGrams: currentWeightGrams == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentWeightGrams),
+      goalWeightGrams: goalWeightGrams == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalWeightGrams),
+      fitnessGoal: fitnessGoal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fitnessGoal),
+      experienceLevel: experienceLevel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(experienceLevel),
+      activityLevel: activityLevel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activityLevel),
+      workoutDaysPerWeek: workoutDaysPerWeek == null && nullToAbsent
+          ? const Value.absent()
+          : Value(workoutDaysPerWeek),
+      trainingLocation: trainingLocation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trainingLocation),
+      equipment: equipment == null && nullToAbsent
+          ? const Value.absent()
+          : Value(equipment),
+      hasCompletedOnboarding: Value(hasCompletedOnboarding),
+      maintenanceCalories: maintenanceCalories == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maintenanceCalories),
+      targetCalories: targetCalories == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetCalories),
+      targetProteinGrams: targetProteinGrams == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetProteinGrams),
+      onboardingCompletedAt: onboardingCompletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(onboardingCompletedAt),
       updatedAt: Value(updatedAt),
     );
   }
@@ -5011,6 +5500,27 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     return UserProfileData(
       userId: serializer.fromJson<String>(json['userId']),
       heightCm: serializer.fromJson<int?>(json['heightCm']),
+      dateOfBirth: serializer.fromJson<DateTime?>(json['dateOfBirth']),
+      gender: serializer.fromJson<String?>(json['gender']),
+      currentWeightGrams: serializer.fromJson<int?>(json['currentWeightGrams']),
+      goalWeightGrams: serializer.fromJson<int?>(json['goalWeightGrams']),
+      fitnessGoal: serializer.fromJson<String?>(json['fitnessGoal']),
+      experienceLevel: serializer.fromJson<String?>(json['experienceLevel']),
+      activityLevel: serializer.fromJson<String?>(json['activityLevel']),
+      workoutDaysPerWeek: serializer.fromJson<int?>(json['workoutDaysPerWeek']),
+      trainingLocation: serializer.fromJson<String?>(json['trainingLocation']),
+      equipment: serializer.fromJson<String?>(json['equipment']),
+      hasCompletedOnboarding: serializer.fromJson<bool>(
+        json['hasCompletedOnboarding'],
+      ),
+      maintenanceCalories: serializer.fromJson<int?>(
+        json['maintenanceCalories'],
+      ),
+      targetCalories: serializer.fromJson<int?>(json['targetCalories']),
+      targetProteinGrams: serializer.fromJson<int?>(json['targetProteinGrams']),
+      onboardingCompletedAt: serializer.fromJson<DateTime?>(
+        json['onboardingCompletedAt'],
+      ),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -5020,6 +5530,23 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     return <String, dynamic>{
       'userId': serializer.toJson<String>(userId),
       'heightCm': serializer.toJson<int?>(heightCm),
+      'dateOfBirth': serializer.toJson<DateTime?>(dateOfBirth),
+      'gender': serializer.toJson<String?>(gender),
+      'currentWeightGrams': serializer.toJson<int?>(currentWeightGrams),
+      'goalWeightGrams': serializer.toJson<int?>(goalWeightGrams),
+      'fitnessGoal': serializer.toJson<String?>(fitnessGoal),
+      'experienceLevel': serializer.toJson<String?>(experienceLevel),
+      'activityLevel': serializer.toJson<String?>(activityLevel),
+      'workoutDaysPerWeek': serializer.toJson<int?>(workoutDaysPerWeek),
+      'trainingLocation': serializer.toJson<String?>(trainingLocation),
+      'equipment': serializer.toJson<String?>(equipment),
+      'hasCompletedOnboarding': serializer.toJson<bool>(hasCompletedOnboarding),
+      'maintenanceCalories': serializer.toJson<int?>(maintenanceCalories),
+      'targetCalories': serializer.toJson<int?>(targetCalories),
+      'targetProteinGrams': serializer.toJson<int?>(targetProteinGrams),
+      'onboardingCompletedAt': serializer.toJson<DateTime?>(
+        onboardingCompletedAt,
+      ),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -5027,16 +5554,108 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
   UserProfileData copyWith({
     String? userId,
     Value<int?> heightCm = const Value.absent(),
+    Value<DateTime?> dateOfBirth = const Value.absent(),
+    Value<String?> gender = const Value.absent(),
+    Value<int?> currentWeightGrams = const Value.absent(),
+    Value<int?> goalWeightGrams = const Value.absent(),
+    Value<String?> fitnessGoal = const Value.absent(),
+    Value<String?> experienceLevel = const Value.absent(),
+    Value<String?> activityLevel = const Value.absent(),
+    Value<int?> workoutDaysPerWeek = const Value.absent(),
+    Value<String?> trainingLocation = const Value.absent(),
+    Value<String?> equipment = const Value.absent(),
+    bool? hasCompletedOnboarding,
+    Value<int?> maintenanceCalories = const Value.absent(),
+    Value<int?> targetCalories = const Value.absent(),
+    Value<int?> targetProteinGrams = const Value.absent(),
+    Value<DateTime?> onboardingCompletedAt = const Value.absent(),
     DateTime? updatedAt,
   }) => UserProfileData(
     userId: userId ?? this.userId,
     heightCm: heightCm.present ? heightCm.value : this.heightCm,
+    dateOfBirth: dateOfBirth.present ? dateOfBirth.value : this.dateOfBirth,
+    gender: gender.present ? gender.value : this.gender,
+    currentWeightGrams: currentWeightGrams.present
+        ? currentWeightGrams.value
+        : this.currentWeightGrams,
+    goalWeightGrams: goalWeightGrams.present
+        ? goalWeightGrams.value
+        : this.goalWeightGrams,
+    fitnessGoal: fitnessGoal.present ? fitnessGoal.value : this.fitnessGoal,
+    experienceLevel: experienceLevel.present
+        ? experienceLevel.value
+        : this.experienceLevel,
+    activityLevel: activityLevel.present
+        ? activityLevel.value
+        : this.activityLevel,
+    workoutDaysPerWeek: workoutDaysPerWeek.present
+        ? workoutDaysPerWeek.value
+        : this.workoutDaysPerWeek,
+    trainingLocation: trainingLocation.present
+        ? trainingLocation.value
+        : this.trainingLocation,
+    equipment: equipment.present ? equipment.value : this.equipment,
+    hasCompletedOnboarding:
+        hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+    maintenanceCalories: maintenanceCalories.present
+        ? maintenanceCalories.value
+        : this.maintenanceCalories,
+    targetCalories: targetCalories.present
+        ? targetCalories.value
+        : this.targetCalories,
+    targetProteinGrams: targetProteinGrams.present
+        ? targetProteinGrams.value
+        : this.targetProteinGrams,
+    onboardingCompletedAt: onboardingCompletedAt.present
+        ? onboardingCompletedAt.value
+        : this.onboardingCompletedAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   UserProfileData copyWithCompanion(UserProfileCompanion data) {
     return UserProfileData(
       userId: data.userId.present ? data.userId.value : this.userId,
       heightCm: data.heightCm.present ? data.heightCm.value : this.heightCm,
+      dateOfBirth: data.dateOfBirth.present
+          ? data.dateOfBirth.value
+          : this.dateOfBirth,
+      gender: data.gender.present ? data.gender.value : this.gender,
+      currentWeightGrams: data.currentWeightGrams.present
+          ? data.currentWeightGrams.value
+          : this.currentWeightGrams,
+      goalWeightGrams: data.goalWeightGrams.present
+          ? data.goalWeightGrams.value
+          : this.goalWeightGrams,
+      fitnessGoal: data.fitnessGoal.present
+          ? data.fitnessGoal.value
+          : this.fitnessGoal,
+      experienceLevel: data.experienceLevel.present
+          ? data.experienceLevel.value
+          : this.experienceLevel,
+      activityLevel: data.activityLevel.present
+          ? data.activityLevel.value
+          : this.activityLevel,
+      workoutDaysPerWeek: data.workoutDaysPerWeek.present
+          ? data.workoutDaysPerWeek.value
+          : this.workoutDaysPerWeek,
+      trainingLocation: data.trainingLocation.present
+          ? data.trainingLocation.value
+          : this.trainingLocation,
+      equipment: data.equipment.present ? data.equipment.value : this.equipment,
+      hasCompletedOnboarding: data.hasCompletedOnboarding.present
+          ? data.hasCompletedOnboarding.value
+          : this.hasCompletedOnboarding,
+      maintenanceCalories: data.maintenanceCalories.present
+          ? data.maintenanceCalories.value
+          : this.maintenanceCalories,
+      targetCalories: data.targetCalories.present
+          ? data.targetCalories.value
+          : this.targetCalories,
+      targetProteinGrams: data.targetProteinGrams.present
+          ? data.targetProteinGrams.value
+          : this.targetProteinGrams,
+      onboardingCompletedAt: data.onboardingCompletedAt.present
+          ? data.onboardingCompletedAt.value
+          : this.onboardingCompletedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -5046,36 +5665,130 @@ class UserProfileData extends DataClass implements Insertable<UserProfileData> {
     return (StringBuffer('UserProfileData(')
           ..write('userId: $userId, ')
           ..write('heightCm: $heightCm, ')
+          ..write('dateOfBirth: $dateOfBirth, ')
+          ..write('gender: $gender, ')
+          ..write('currentWeightGrams: $currentWeightGrams, ')
+          ..write('goalWeightGrams: $goalWeightGrams, ')
+          ..write('fitnessGoal: $fitnessGoal, ')
+          ..write('experienceLevel: $experienceLevel, ')
+          ..write('activityLevel: $activityLevel, ')
+          ..write('workoutDaysPerWeek: $workoutDaysPerWeek, ')
+          ..write('trainingLocation: $trainingLocation, ')
+          ..write('equipment: $equipment, ')
+          ..write('hasCompletedOnboarding: $hasCompletedOnboarding, ')
+          ..write('maintenanceCalories: $maintenanceCalories, ')
+          ..write('targetCalories: $targetCalories, ')
+          ..write('targetProteinGrams: $targetProteinGrams, ')
+          ..write('onboardingCompletedAt: $onboardingCompletedAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(userId, heightCm, updatedAt);
+  int get hashCode => Object.hash(
+    userId,
+    heightCm,
+    dateOfBirth,
+    gender,
+    currentWeightGrams,
+    goalWeightGrams,
+    fitnessGoal,
+    experienceLevel,
+    activityLevel,
+    workoutDaysPerWeek,
+    trainingLocation,
+    equipment,
+    hasCompletedOnboarding,
+    maintenanceCalories,
+    targetCalories,
+    targetProteinGrams,
+    onboardingCompletedAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UserProfileData &&
           other.userId == this.userId &&
           other.heightCm == this.heightCm &&
+          other.dateOfBirth == this.dateOfBirth &&
+          other.gender == this.gender &&
+          other.currentWeightGrams == this.currentWeightGrams &&
+          other.goalWeightGrams == this.goalWeightGrams &&
+          other.fitnessGoal == this.fitnessGoal &&
+          other.experienceLevel == this.experienceLevel &&
+          other.activityLevel == this.activityLevel &&
+          other.workoutDaysPerWeek == this.workoutDaysPerWeek &&
+          other.trainingLocation == this.trainingLocation &&
+          other.equipment == this.equipment &&
+          other.hasCompletedOnboarding == this.hasCompletedOnboarding &&
+          other.maintenanceCalories == this.maintenanceCalories &&
+          other.targetCalories == this.targetCalories &&
+          other.targetProteinGrams == this.targetProteinGrams &&
+          other.onboardingCompletedAt == this.onboardingCompletedAt &&
           other.updatedAt == this.updatedAt);
 }
 
 class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
   final Value<String> userId;
   final Value<int?> heightCm;
+  final Value<DateTime?> dateOfBirth;
+  final Value<String?> gender;
+  final Value<int?> currentWeightGrams;
+  final Value<int?> goalWeightGrams;
+  final Value<String?> fitnessGoal;
+  final Value<String?> experienceLevel;
+  final Value<String?> activityLevel;
+  final Value<int?> workoutDaysPerWeek;
+  final Value<String?> trainingLocation;
+  final Value<String?> equipment;
+  final Value<bool> hasCompletedOnboarding;
+  final Value<int?> maintenanceCalories;
+  final Value<int?> targetCalories;
+  final Value<int?> targetProteinGrams;
+  final Value<DateTime?> onboardingCompletedAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const UserProfileCompanion({
     this.userId = const Value.absent(),
     this.heightCm = const Value.absent(),
+    this.dateOfBirth = const Value.absent(),
+    this.gender = const Value.absent(),
+    this.currentWeightGrams = const Value.absent(),
+    this.goalWeightGrams = const Value.absent(),
+    this.fitnessGoal = const Value.absent(),
+    this.experienceLevel = const Value.absent(),
+    this.activityLevel = const Value.absent(),
+    this.workoutDaysPerWeek = const Value.absent(),
+    this.trainingLocation = const Value.absent(),
+    this.equipment = const Value.absent(),
+    this.hasCompletedOnboarding = const Value.absent(),
+    this.maintenanceCalories = const Value.absent(),
+    this.targetCalories = const Value.absent(),
+    this.targetProteinGrams = const Value.absent(),
+    this.onboardingCompletedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   UserProfileCompanion.insert({
     required String userId,
     this.heightCm = const Value.absent(),
+    this.dateOfBirth = const Value.absent(),
+    this.gender = const Value.absent(),
+    this.currentWeightGrams = const Value.absent(),
+    this.goalWeightGrams = const Value.absent(),
+    this.fitnessGoal = const Value.absent(),
+    this.experienceLevel = const Value.absent(),
+    this.activityLevel = const Value.absent(),
+    this.workoutDaysPerWeek = const Value.absent(),
+    this.trainingLocation = const Value.absent(),
+    this.equipment = const Value.absent(),
+    this.hasCompletedOnboarding = const Value.absent(),
+    this.maintenanceCalories = const Value.absent(),
+    this.targetCalories = const Value.absent(),
+    this.targetProteinGrams = const Value.absent(),
+    this.onboardingCompletedAt = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : userId = Value(userId),
@@ -5083,12 +5796,48 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
   static Insertable<UserProfileData> custom({
     Expression<String>? userId,
     Expression<int>? heightCm,
+    Expression<DateTime>? dateOfBirth,
+    Expression<String>? gender,
+    Expression<int>? currentWeightGrams,
+    Expression<int>? goalWeightGrams,
+    Expression<String>? fitnessGoal,
+    Expression<String>? experienceLevel,
+    Expression<String>? activityLevel,
+    Expression<int>? workoutDaysPerWeek,
+    Expression<String>? trainingLocation,
+    Expression<String>? equipment,
+    Expression<bool>? hasCompletedOnboarding,
+    Expression<int>? maintenanceCalories,
+    Expression<int>? targetCalories,
+    Expression<int>? targetProteinGrams,
+    Expression<DateTime>? onboardingCompletedAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (userId != null) 'user_id': userId,
       if (heightCm != null) 'height_cm': heightCm,
+      if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
+      if (gender != null) 'gender': gender,
+      if (currentWeightGrams != null)
+        'current_weight_grams': currentWeightGrams,
+      if (goalWeightGrams != null) 'goal_weight_grams': goalWeightGrams,
+      if (fitnessGoal != null) 'fitness_goal': fitnessGoal,
+      if (experienceLevel != null) 'experience_level': experienceLevel,
+      if (activityLevel != null) 'activity_level': activityLevel,
+      if (workoutDaysPerWeek != null)
+        'workout_days_per_week': workoutDaysPerWeek,
+      if (trainingLocation != null) 'training_location': trainingLocation,
+      if (equipment != null) 'equipment': equipment,
+      if (hasCompletedOnboarding != null)
+        'has_completed_onboarding': hasCompletedOnboarding,
+      if (maintenanceCalories != null)
+        'maintenance_calories': maintenanceCalories,
+      if (targetCalories != null) 'target_calories': targetCalories,
+      if (targetProteinGrams != null)
+        'target_protein_grams': targetProteinGrams,
+      if (onboardingCompletedAt != null)
+        'onboarding_completed_at': onboardingCompletedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -5097,12 +5846,44 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
   UserProfileCompanion copyWith({
     Value<String>? userId,
     Value<int?>? heightCm,
+    Value<DateTime?>? dateOfBirth,
+    Value<String?>? gender,
+    Value<int?>? currentWeightGrams,
+    Value<int?>? goalWeightGrams,
+    Value<String?>? fitnessGoal,
+    Value<String?>? experienceLevel,
+    Value<String?>? activityLevel,
+    Value<int?>? workoutDaysPerWeek,
+    Value<String?>? trainingLocation,
+    Value<String?>? equipment,
+    Value<bool>? hasCompletedOnboarding,
+    Value<int?>? maintenanceCalories,
+    Value<int?>? targetCalories,
+    Value<int?>? targetProteinGrams,
+    Value<DateTime?>? onboardingCompletedAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
     return UserProfileCompanion(
       userId: userId ?? this.userId,
       heightCm: heightCm ?? this.heightCm,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      gender: gender ?? this.gender,
+      currentWeightGrams: currentWeightGrams ?? this.currentWeightGrams,
+      goalWeightGrams: goalWeightGrams ?? this.goalWeightGrams,
+      fitnessGoal: fitnessGoal ?? this.fitnessGoal,
+      experienceLevel: experienceLevel ?? this.experienceLevel,
+      activityLevel: activityLevel ?? this.activityLevel,
+      workoutDaysPerWeek: workoutDaysPerWeek ?? this.workoutDaysPerWeek,
+      trainingLocation: trainingLocation ?? this.trainingLocation,
+      equipment: equipment ?? this.equipment,
+      hasCompletedOnboarding:
+          hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      maintenanceCalories: maintenanceCalories ?? this.maintenanceCalories,
+      targetCalories: targetCalories ?? this.targetCalories,
+      targetProteinGrams: targetProteinGrams ?? this.targetProteinGrams,
+      onboardingCompletedAt:
+          onboardingCompletedAt ?? this.onboardingCompletedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -5116,6 +5897,55 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     }
     if (heightCm.present) {
       map['height_cm'] = Variable<int>(heightCm.value);
+    }
+    if (dateOfBirth.present) {
+      map['date_of_birth'] = Variable<DateTime>(dateOfBirth.value);
+    }
+    if (gender.present) {
+      map['gender'] = Variable<String>(gender.value);
+    }
+    if (currentWeightGrams.present) {
+      map['current_weight_grams'] = Variable<int>(currentWeightGrams.value);
+    }
+    if (goalWeightGrams.present) {
+      map['goal_weight_grams'] = Variable<int>(goalWeightGrams.value);
+    }
+    if (fitnessGoal.present) {
+      map['fitness_goal'] = Variable<String>(fitnessGoal.value);
+    }
+    if (experienceLevel.present) {
+      map['experience_level'] = Variable<String>(experienceLevel.value);
+    }
+    if (activityLevel.present) {
+      map['activity_level'] = Variable<String>(activityLevel.value);
+    }
+    if (workoutDaysPerWeek.present) {
+      map['workout_days_per_week'] = Variable<int>(workoutDaysPerWeek.value);
+    }
+    if (trainingLocation.present) {
+      map['training_location'] = Variable<String>(trainingLocation.value);
+    }
+    if (equipment.present) {
+      map['equipment'] = Variable<String>(equipment.value);
+    }
+    if (hasCompletedOnboarding.present) {
+      map['has_completed_onboarding'] = Variable<bool>(
+        hasCompletedOnboarding.value,
+      );
+    }
+    if (maintenanceCalories.present) {
+      map['maintenance_calories'] = Variable<int>(maintenanceCalories.value);
+    }
+    if (targetCalories.present) {
+      map['target_calories'] = Variable<int>(targetCalories.value);
+    }
+    if (targetProteinGrams.present) {
+      map['target_protein_grams'] = Variable<int>(targetProteinGrams.value);
+    }
+    if (onboardingCompletedAt.present) {
+      map['onboarding_completed_at'] = Variable<DateTime>(
+        onboardingCompletedAt.value,
+      );
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -5131,6 +5961,21 @@ class UserProfileCompanion extends UpdateCompanion<UserProfileData> {
     return (StringBuffer('UserProfileCompanion(')
           ..write('userId: $userId, ')
           ..write('heightCm: $heightCm, ')
+          ..write('dateOfBirth: $dateOfBirth, ')
+          ..write('gender: $gender, ')
+          ..write('currentWeightGrams: $currentWeightGrams, ')
+          ..write('goalWeightGrams: $goalWeightGrams, ')
+          ..write('fitnessGoal: $fitnessGoal, ')
+          ..write('experienceLevel: $experienceLevel, ')
+          ..write('activityLevel: $activityLevel, ')
+          ..write('workoutDaysPerWeek: $workoutDaysPerWeek, ')
+          ..write('trainingLocation: $trainingLocation, ')
+          ..write('equipment: $equipment, ')
+          ..write('hasCompletedOnboarding: $hasCompletedOnboarding, ')
+          ..write('maintenanceCalories: $maintenanceCalories, ')
+          ..write('targetCalories: $targetCalories, ')
+          ..write('targetProteinGrams: $targetProteinGrams, ')
+          ..write('onboardingCompletedAt: $onboardingCompletedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -9949,6 +10794,21 @@ typedef $$UserProfileTableCreateCompanionBuilder =
     UserProfileCompanion Function({
       required String userId,
       Value<int?> heightCm,
+      Value<DateTime?> dateOfBirth,
+      Value<String?> gender,
+      Value<int?> currentWeightGrams,
+      Value<int?> goalWeightGrams,
+      Value<String?> fitnessGoal,
+      Value<String?> experienceLevel,
+      Value<String?> activityLevel,
+      Value<int?> workoutDaysPerWeek,
+      Value<String?> trainingLocation,
+      Value<String?> equipment,
+      Value<bool> hasCompletedOnboarding,
+      Value<int?> maintenanceCalories,
+      Value<int?> targetCalories,
+      Value<int?> targetProteinGrams,
+      Value<DateTime?> onboardingCompletedAt,
       required DateTime updatedAt,
       Value<int> rowid,
     });
@@ -9956,6 +10816,21 @@ typedef $$UserProfileTableUpdateCompanionBuilder =
     UserProfileCompanion Function({
       Value<String> userId,
       Value<int?> heightCm,
+      Value<DateTime?> dateOfBirth,
+      Value<String?> gender,
+      Value<int?> currentWeightGrams,
+      Value<int?> goalWeightGrams,
+      Value<String?> fitnessGoal,
+      Value<String?> experienceLevel,
+      Value<String?> activityLevel,
+      Value<int?> workoutDaysPerWeek,
+      Value<String?> trainingLocation,
+      Value<String?> equipment,
+      Value<bool> hasCompletedOnboarding,
+      Value<int?> maintenanceCalories,
+      Value<int?> targetCalories,
+      Value<int?> targetProteinGrams,
+      Value<DateTime?> onboardingCompletedAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -9976,6 +10851,81 @@ class $$UserProfileTableFilterComposer
 
   ColumnFilters<int> get heightCm => $composableBuilder(
     column: $table.heightCm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gender => $composableBuilder(
+    column: $table.gender,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get currentWeightGrams => $composableBuilder(
+    column: $table.currentWeightGrams,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get goalWeightGrams => $composableBuilder(
+    column: $table.goalWeightGrams,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fitnessGoal => $composableBuilder(
+    column: $table.fitnessGoal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get experienceLevel => $composableBuilder(
+    column: $table.experienceLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get activityLevel => $composableBuilder(
+    column: $table.activityLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get workoutDaysPerWeek => $composableBuilder(
+    column: $table.workoutDaysPerWeek,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get trainingLocation => $composableBuilder(
+    column: $table.trainingLocation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get equipment => $composableBuilder(
+    column: $table.equipment,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hasCompletedOnboarding => $composableBuilder(
+    column: $table.hasCompletedOnboarding,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maintenanceCalories => $composableBuilder(
+    column: $table.maintenanceCalories,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetCalories => $composableBuilder(
+    column: $table.targetCalories,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetProteinGrams => $composableBuilder(
+    column: $table.targetProteinGrams,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get onboardingCompletedAt => $composableBuilder(
+    column: $table.onboardingCompletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10004,6 +10954,81 @@ class $$UserProfileTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get gender => $composableBuilder(
+    column: $table.gender,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get currentWeightGrams => $composableBuilder(
+    column: $table.currentWeightGrams,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get goalWeightGrams => $composableBuilder(
+    column: $table.goalWeightGrams,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fitnessGoal => $composableBuilder(
+    column: $table.fitnessGoal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get experienceLevel => $composableBuilder(
+    column: $table.experienceLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get activityLevel => $composableBuilder(
+    column: $table.activityLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get workoutDaysPerWeek => $composableBuilder(
+    column: $table.workoutDaysPerWeek,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get trainingLocation => $composableBuilder(
+    column: $table.trainingLocation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get equipment => $composableBuilder(
+    column: $table.equipment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hasCompletedOnboarding => $composableBuilder(
+    column: $table.hasCompletedOnboarding,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maintenanceCalories => $composableBuilder(
+    column: $table.maintenanceCalories,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetCalories => $composableBuilder(
+    column: $table.targetCalories,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetProteinGrams => $composableBuilder(
+    column: $table.targetProteinGrams,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get onboardingCompletedAt => $composableBuilder(
+    column: $table.onboardingCompletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -10024,6 +11049,77 @@ class $$UserProfileTableAnnotationComposer
 
   GeneratedColumn<int> get heightCm =>
       $composableBuilder(column: $table.heightCm, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get gender =>
+      $composableBuilder(column: $table.gender, builder: (column) => column);
+
+  GeneratedColumn<int> get currentWeightGrams => $composableBuilder(
+    column: $table.currentWeightGrams,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get goalWeightGrams => $composableBuilder(
+    column: $table.goalWeightGrams,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fitnessGoal => $composableBuilder(
+    column: $table.fitnessGoal,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get experienceLevel => $composableBuilder(
+    column: $table.experienceLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get activityLevel => $composableBuilder(
+    column: $table.activityLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get workoutDaysPerWeek => $composableBuilder(
+    column: $table.workoutDaysPerWeek,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get trainingLocation => $composableBuilder(
+    column: $table.trainingLocation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get equipment =>
+      $composableBuilder(column: $table.equipment, builder: (column) => column);
+
+  GeneratedColumn<bool> get hasCompletedOnboarding => $composableBuilder(
+    column: $table.hasCompletedOnboarding,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get maintenanceCalories => $composableBuilder(
+    column: $table.maintenanceCalories,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get targetCalories => $composableBuilder(
+    column: $table.targetCalories,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get targetProteinGrams => $composableBuilder(
+    column: $table.targetProteinGrams,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get onboardingCompletedAt => $composableBuilder(
+    column: $table.onboardingCompletedAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -10062,11 +11158,41 @@ class $$UserProfileTableTableManager
               ({
                 Value<String> userId = const Value.absent(),
                 Value<int?> heightCm = const Value.absent(),
+                Value<DateTime?> dateOfBirth = const Value.absent(),
+                Value<String?> gender = const Value.absent(),
+                Value<int?> currentWeightGrams = const Value.absent(),
+                Value<int?> goalWeightGrams = const Value.absent(),
+                Value<String?> fitnessGoal = const Value.absent(),
+                Value<String?> experienceLevel = const Value.absent(),
+                Value<String?> activityLevel = const Value.absent(),
+                Value<int?> workoutDaysPerWeek = const Value.absent(),
+                Value<String?> trainingLocation = const Value.absent(),
+                Value<String?> equipment = const Value.absent(),
+                Value<bool> hasCompletedOnboarding = const Value.absent(),
+                Value<int?> maintenanceCalories = const Value.absent(),
+                Value<int?> targetCalories = const Value.absent(),
+                Value<int?> targetProteinGrams = const Value.absent(),
+                Value<DateTime?> onboardingCompletedAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UserProfileCompanion(
                 userId: userId,
                 heightCm: heightCm,
+                dateOfBirth: dateOfBirth,
+                gender: gender,
+                currentWeightGrams: currentWeightGrams,
+                goalWeightGrams: goalWeightGrams,
+                fitnessGoal: fitnessGoal,
+                experienceLevel: experienceLevel,
+                activityLevel: activityLevel,
+                workoutDaysPerWeek: workoutDaysPerWeek,
+                trainingLocation: trainingLocation,
+                equipment: equipment,
+                hasCompletedOnboarding: hasCompletedOnboarding,
+                maintenanceCalories: maintenanceCalories,
+                targetCalories: targetCalories,
+                targetProteinGrams: targetProteinGrams,
+                onboardingCompletedAt: onboardingCompletedAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -10074,11 +11200,41 @@ class $$UserProfileTableTableManager
               ({
                 required String userId,
                 Value<int?> heightCm = const Value.absent(),
+                Value<DateTime?> dateOfBirth = const Value.absent(),
+                Value<String?> gender = const Value.absent(),
+                Value<int?> currentWeightGrams = const Value.absent(),
+                Value<int?> goalWeightGrams = const Value.absent(),
+                Value<String?> fitnessGoal = const Value.absent(),
+                Value<String?> experienceLevel = const Value.absent(),
+                Value<String?> activityLevel = const Value.absent(),
+                Value<int?> workoutDaysPerWeek = const Value.absent(),
+                Value<String?> trainingLocation = const Value.absent(),
+                Value<String?> equipment = const Value.absent(),
+                Value<bool> hasCompletedOnboarding = const Value.absent(),
+                Value<int?> maintenanceCalories = const Value.absent(),
+                Value<int?> targetCalories = const Value.absent(),
+                Value<int?> targetProteinGrams = const Value.absent(),
+                Value<DateTime?> onboardingCompletedAt = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => UserProfileCompanion.insert(
                 userId: userId,
                 heightCm: heightCm,
+                dateOfBirth: dateOfBirth,
+                gender: gender,
+                currentWeightGrams: currentWeightGrams,
+                goalWeightGrams: goalWeightGrams,
+                fitnessGoal: fitnessGoal,
+                experienceLevel: experienceLevel,
+                activityLevel: activityLevel,
+                workoutDaysPerWeek: workoutDaysPerWeek,
+                trainingLocation: trainingLocation,
+                equipment: equipment,
+                hasCompletedOnboarding: hasCompletedOnboarding,
+                maintenanceCalories: maintenanceCalories,
+                targetCalories: targetCalories,
+                targetProteinGrams: targetProteinGrams,
+                onboardingCompletedAt: onboardingCompletedAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

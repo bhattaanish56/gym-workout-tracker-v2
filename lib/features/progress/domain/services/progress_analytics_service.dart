@@ -264,4 +264,31 @@ class ProgressAnalyticsService {
 
     return bestEstimate;
   }
+
+  Future<List<String>> getExerciseIdsWithHistory() async {
+    final query = _db.select(_db.performedExercises).join([
+      innerJoin(
+        _db.workoutSessions,
+        _db.workoutSessions.id.equalsExp(_db.performedExercises.sessionId),
+      ),
+    ])
+      ..where(_db.workoutSessions.status.equals('completed') &
+              _db.workoutSessions.userId.equals(userId));
+
+    final results = await query.get();
+    final exerciseIds = <String>{};
+
+    for (final row in results) {
+      final exercise = row.readTable(_db.performedExercises);
+      final snapshotJson = exercise.snapshotJson;
+
+      // Extract exercise ID from snapshot JSON
+      final idMatch = RegExp(r'"id":"([^"]+)"').firstMatch(snapshotJson);
+      if (idMatch != null) {
+        exerciseIds.add(idMatch.group(1)!);
+      }
+    }
+
+    return exerciseIds.toList();
+  }
 }
