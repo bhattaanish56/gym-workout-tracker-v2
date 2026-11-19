@@ -210,15 +210,6 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 color: Colors.orange,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.layers,
-                value: '${(stats['totalVolume']! / 1000).toStringAsFixed(0)} kg',
-                label: 'Total\nVolume',
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),

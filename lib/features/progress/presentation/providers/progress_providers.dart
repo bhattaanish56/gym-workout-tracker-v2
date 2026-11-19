@@ -28,7 +28,7 @@ class BodyWeightTimeRangeNotifier extends Notifier<TimeRange> {
 
 class SelectedExerciseIdNotifier extends Notifier<String?> {
   @override
-  String? build() => null;
+  String? build() => 'ex_bench_press_barbell';
 
   void setExercise(String? id) {
     state = id;

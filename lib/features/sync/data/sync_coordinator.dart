@@ -64,24 +64,36 @@ class SyncCoordinator {
   }
 
   Future<void> syncPending() async {
-    if (_isSyncing) return;
+    if (_isSyncing) {
+      print('[SyncCoordinator] Already syncing, skipping');
+      return;
+    }
 
     final connectivityResults = await _connectivity.checkConnectivity();
     if (connectivityResults.every((result) => result == ConnectivityResult.none)) {
+      print('[SyncCoordinator] Offline, skipping sync');
       return; // Offline
     }
 
     _isSyncing = true;
     try {
       final pending = await _queueRepo.getPendingOperations();
+      print('[SyncCoordinator] Found ${pending.length} pending operations');
+
+      int processed = 0, skipped = 0, succeeded = 0, failed = 0;
 
       for (final operation in pending) {
         // Skip if too many retries
         if (operation.retryCount >= 5) {
+          print('[SyncCoordinator] Skipping ${operation.collection}/${operation.recordId} (retryCount=${operation.retryCount})');
+          skipped++;
           continue;
         }
 
         try {
+          print('[SyncCoordinator] Processing ${operation.collection}/${operation.recordId} (retry ${operation.retryCount})');
+          processed++;
+
           // Mark as in progress
           await _queueRepo.updateSyncOperation(
             operation.copyWith(
@@ -99,7 +111,10 @@ class SyncCoordinator {
               status: SyncStatus.completed,
             ),
           );
+          print('[SyncCoordinator] ✓ Success ${operation.collection}/${operation.recordId}');
+          succeeded++;
         } catch (e) {
+          print('[SyncCoordinator] ✗ Failed ${operation.collection}/${operation.recordId}: $e');
           // Mark as failed with retry
           await _queueRepo.updateSyncOperation(
             operation.copyWith(
@@ -108,8 +123,11 @@ class SyncCoordinator {
               error: e.toString(),
             ),
           );
+          failed++;
         }
       }
+
+      print('[SyncCoordinator] Sync complete: processed=$processed, succeeded=$succeeded, failed=$failed, skipped=$skipped');
 
       // Clean up old completed operations (older than 7 days)
       await _queueRepo.clearCompletedOperations();
