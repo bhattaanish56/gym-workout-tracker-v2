@@ -14,6 +14,7 @@ class WorkoutSessions extends Table {
   TextColumn get programId => text().nullable()();
   TextColumn get programDayId => text().nullable()();
   TextColumn get programSnapshot => text().nullable()();
+  TextColumn get fulfilledScheduledDate => text().nullable()(); // YYYY-MM-DD for early completion
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 
@@ -180,7 +181,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withQueryExecutor(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -212,6 +213,17 @@ class AppDatabase extends _$AppDatabase {
         // v5 -> v6: Create weekday_assignments table
         if (from <= 5 && to >= 6) {
           await m.createTable(weekdayAssignments);
+        }
+        // v6 -> v7: Add fulfilledScheduledDate to WorkoutSessions (idempotent)
+        if (from <= 6 && to >= 7) {
+          try {
+            await m.addColumn(workoutSessions, workoutSessions.fulfilledScheduledDate);
+          } catch (e) {
+            // Column already exists - safe to continue
+            if (!e.toString().contains('duplicate column')) {
+              rethrow;
+            }
+          }
         }
       },
       beforeOpen: (details) async {

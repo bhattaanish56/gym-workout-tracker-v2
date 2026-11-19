@@ -3,8 +3,9 @@ import 'rest_timer_notifier.dart';
 
 class RestTimerWidget extends StatelessWidget {
   final RestTimerNotifier notifier;
+  final VoidCallback? onSkip;
 
-  const RestTimerWidget({super.key, required this.notifier});
+  const RestTimerWidget({super.key, required this.notifier, this.onSkip});
 
   @override
   Widget build(BuildContext context) {
@@ -67,8 +68,11 @@ class RestTimerWidget extends StatelessWidget {
                     ),
                     IconButton(
                       icon: Icon(Icons.skip_next, color: theme.colorScheme.onPrimaryContainer),
-                      onPressed: () => notifier.skip(),
-                      tooltip: 'Skip',
+                      onPressed: () {
+                        notifier.skip();
+                        onSkip?.call();
+                      },
+                      tooltip: 'Skip Rest',
                     ),
                   ],
                 ),

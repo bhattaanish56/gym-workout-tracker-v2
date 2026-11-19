@@ -9,7 +9,11 @@ import '../../../programs/domain/models/program_day.dart';
 import '../../../progress/presentation/providers/progress_providers.dart';
 import '../../../../core/presentation/providers/theme_provider.dart';
 import '../../domain/models/daily_science.dart';
+import '../../domain/providers/today_workout_status_provider.dart';
+import '../../domain/models/today_workout_status.dart';
 import '../widgets/shimmer_workout_button.dart';
+import '../../../sessions/presentation/widgets/early_workout_dialog.dart';
+import '../../../../core/domain/value_objects/date_time.dart';
 
 class HomeScreenRedesign extends ConsumerWidget {
   const HomeScreenRedesign({
@@ -249,194 +253,32 @@ class HomeScreenRedesign extends ConsumerWidget {
       );
     }
 
-    // Active program - show next workout
-    return activeProgramAsync.when(
-      data: (program) {
-        if (program != null) {
-          return nextWorkoutAsync.when(
-            data: (nextDay) {
-              if (nextDay == null) {
-                return _buildRestDayCard(context, theme, program);
-              }
-              if (nextDay is! ProgramDay) {
-                return _buildNoActiveCard(context, theme);
-              }
-              return _buildScheduledWorkoutCard(context, theme, ref, program, nextDay);
-            },
-            loading: () => _buildLoadingCard(context, theme),
-            error: (_, __) => _buildNoActiveCard(context, theme),
-          );
-        }
-        return _buildNoActiveCard(context, theme);
+    // Use new status provider for completed/next separation
+    final statusAsync = ref.watch(todayWorkoutStatusProvider);
+    return statusAsync.when(
+      data: (status) {
+        return Column(
+          children: [
+            // Completed today card
+            if (status.completedToday != null)
+              _buildCompletedTodayCard(context, theme, status.completedToday!),
+
+            // Spacing
+            if (status.completedToday != null && status.nextWorkout != null)
+              const SizedBox(height: 12),
+
+            // Next workout card
+            if (status.nextWorkout != null)
+              _buildNextWorkoutCard(context, theme, ref, status.nextWorkout!),
+
+            // No program fallback
+            if (status.nextWorkout == null && status.completedToday == null)
+              _buildNoActiveCard(context, theme),
+          ],
+        );
       },
       loading: () => _buildLoadingCard(context, theme),
       error: (_, __) => _buildNoActiveCard(context, theme),
-    );
-  }
-
-  Widget _buildScheduledWorkoutCard(
-    BuildContext context,
-    ThemeData theme,
-    WidgetRef ref,
-    Program program,
-    ProgramDay nextDay,
-  ) {
-    // Fetch exercises count for the day
-    final exercisesAsync = ref.watch(plannedExercisesProvider(nextDay.id));
-
-    String subtitle = 'Scheduled';
-    exercisesAsync.whenData((exercises) {
-      if (exercises.isNotEmpty) {
-        subtitle = '${exercises.length} ${exercises.length == 1 ? 'exercise' : 'exercises'}';
-      }
-    });
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Today\'s Training',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.fitness_center,
-                    color: theme.colorScheme.primary,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        nextDay.name,
-                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ShimmerWorkoutButton(
-                onPressed: () async {
-                  await ref
-                      .read(activeWorkoutProvider.notifier)
-                      .startPlannedWorkout(program.id.value, nextDay.id.value);
-                  if (context.mounted) {
-                    final error = ref.read(activeWorkoutProvider).error;
-                    if (error != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(error)),
-                      );
-                    }
-                  }
-                },
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.play_arrow, size: 24),
-                    SizedBox(width: 8),
-                    Text('Start Workout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRestDayCard(BuildContext context, ThemeData theme, Program program) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Today\'s Training',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.hotel,
-                    color: theme.colorScheme.primary,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Rest Day',
-                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Recovery',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -665,6 +507,214 @@ class HomeScreenRedesign extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildCompletedTodayCard(BuildContext context, ThemeData theme, WorkoutCompletedToday completed) {
+    final timeFormat = DateFormat('h:mm a');
+    return Card(
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.check_circle,
+                color: theme.colorScheme.primary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${completed.dayName} Completed',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Finished at ${timeFormat.format(completed.completedAt.toLocal())}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNextWorkoutCard(BuildContext context, ThemeData theme, WidgetRef ref, NextWorkout next) {
+    final exercisesAsync = ref.watch(plannedExercisesProvider(next.day.id));
+
+    String subtitle = 'Up Next';
+    if (next.isScheduledForFuture) {
+      final date = next.scheduledDate!;
+      final dayName = DateFormat('EEEE').format(date);
+      subtitle = 'Scheduled for $dayName';
+    }
+
+    exercisesAsync.whenData((exercises) {
+      if (exercises.isNotEmpty) {
+        final base = next.isScheduledForFuture ? 'Scheduled • ' : '';
+        subtitle = '$base${exercises.length} ${exercises.length == 1 ? 'exercise' : 'exercises'}';
+      }
+    });
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.fitness_center, color: theme.colorScheme.primary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Up Next',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.directions_run,
+                    color: theme.colorScheme.primary,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        next.day.name,
+                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ShimmerWorkoutButton(
+                onPressed: () async {
+                  await _startPlannedWorkout(context, ref, next.program, next.day);
+                },
+                backgroundColor: next.isScheduledForFuture
+                    ? theme.colorScheme.secondary
+                    : theme.colorScheme.primary,
+                foregroundColor: next.isScheduledForFuture
+                    ? theme.colorScheme.onSecondary
+                    : theme.colorScheme.onPrimary,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.play_arrow, size: 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      next.isScheduledForFuture ? 'Start Early Today' : 'Start Workout',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Helper to start planned workout with early workout dialog if needed
+  Future<void> _startPlannedWorkout(
+    BuildContext context,
+    WidgetRef ref,
+    Program program,
+    ProgramDay nextDay,
+  ) async {
+    // For fixed weekly: check if workout is scheduled for future
+    LocalDate? scheduledDate;
+
+    if (program.scheduleMode == ScheduleMode.fixedWeekly) {
+      // For fixed weekly: check if workout is scheduled for future
+      // Simplified check - full implementation would query weekday assignments
+      scheduledDate = null; // Use today
+    }
+
+    // If scheduled for future, show dialog
+    if (scheduledDate != null) {
+      final todayLocal = LocalDate.fromDateTime(DateTime.now());
+      final isFuture = scheduledDate.year > todayLocal.year ||
+          (scheduledDate.year == todayLocal.year && scheduledDate.month > todayLocal.month) ||
+          (scheduledDate.year == todayLocal.year &&
+           scheduledDate.month == todayLocal.month &&
+           scheduledDate.day > todayLocal.day);
+
+      if (isFuture && context.mounted) {
+        final choice = await showDialog<EarlyWorkoutChoice>(
+          context: context,
+          builder: (context) => EarlyWorkoutDialog(workoutName: nextDay.name),
+        );
+
+        if (choice == EarlyWorkoutChoice.cancel || choice == null) {
+          return;
+        }
+
+        if (choice == EarlyWorkoutChoice.additionalWorkout) {
+          scheduledDate = null; // Use today instead
+        }
+        // If completeScheduled, keep the scheduled date
+      }
+    }
+
+    // Start workout
+    await ref.read(activeWorkoutProvider.notifier).startPlannedWorkout(
+      program.id.value,
+      nextDay.id.value,
+      scheduledDate: scheduledDate,
+    );
+
+    if (context.mounted) {
+      final error = ref.read(activeWorkoutProvider).error;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
+    }
   }
 }
 

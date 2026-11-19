@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,14 +5,9 @@ import '../../domain/models/workout_session.dart' as domain;
 import '../../domain/models/performed_exercise.dart' as domain;
 import '../../domain/models/performed_set.dart' as domain;
 import '../providers/workout_providers.dart';
-import '../../../exercises/presentation/widgets/exercise_picker_dialog.dart';
-import '../widgets/rest_timer_widget.dart';
-import '../widgets/rest_timer_notifier.dart';
-import '../widgets/workout_completion_dialog.dart';
 import '../../../programs/presentation/providers/program_providers.dart';
-import '../../../progress/presentation/providers/progress_providers.dart';
-import '../../../../core/domain/value_objects/weight.dart';
 import '../../../../core/domain/value_objects/identifiers.dart';
+import 'active_workout_screen.dart';
 
 class WorkoutsScreen extends ConsumerWidget {
   const WorkoutsScreen({super.key});
@@ -27,7 +21,7 @@ class WorkoutsScreen extends ConsumerWidget {
     final allProgramsAsync = ref.watch(allProgramsProvider);
 
     if (activeWorkout.session != null) {
-      return const ActiveWorkoutEditor();
+      return const ActiveWorkoutScreen();
     }
 
     return Scaffold(
@@ -228,14 +222,51 @@ class WorkoutsScreen extends ConsumerWidget {
                 ),
               ),
             ),
+
+            // Resume Active Workout card
+            if (activeWorkout.session != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: _ResumeActiveWorkoutCard(
+                    session: activeWorkout.session!,
+                    exercises: activeWorkout.exercises,
+                    setsByExercise: activeWorkout.setsByExercise,
+                  ),
+                ),
+              ),
+
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Text(
-                  'Recent Workouts',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.history,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Recent Workouts',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: () => context.push('/workouts/history'),
+                      icon: const Icon(Icons.arrow_forward, size: 16),
+                      label: const Text('View All'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -323,6 +354,42 @@ class WorkoutsScreen extends ConsumerWidget {
                 ),
               ),
             ),
+
+            // Info banner about incomplete sets
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.amber.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        color: Colors.amber.shade800,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Incomplete sets are saved but excluded from stats.',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.amber.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             SliverToBoxAdapter(child: SizedBox(height: 16)),
           ],
         ),
@@ -354,6 +421,9 @@ class WorkoutsScreen extends ConsumerWidget {
                         Navigator.of(context).pop();
                         final repo = ref.read(programRepositoryProvider);
                         await repo.activateProgram(RecordId(program.id.value));
+                        ref.invalidate(activeProgramProvider);
+                        ref.invalidate(nextPlannedWorkoutProvider);
+                        ref.invalidate(allProgramsProvider);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Switched to ${program.name}')),
@@ -419,6 +489,111 @@ class _QuickActionCard extends StatelessWidget {
   }
 }
 
+class _ResumeActiveWorkoutCard extends ConsumerWidget {
+  final domain.WorkoutSession session;
+  final List<domain.PerformedExercise> exercises;
+  final Map<String, List<domain.PerformedSet>> setsByExercise;
+
+  const _ResumeActiveWorkoutCard({
+    required this.session,
+    required this.exercises,
+    required this.setsByExercise,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dayName = session.programSnapshot?['dayName'] as String? ?? 'Workout';
+
+    int completedExercises = 0;
+    for (final exercise in exercises) {
+      final sets = setsByExercise[exercise.id.value] ?? [];
+      if (sets.isNotEmpty && sets.every((s) => s.completed)) {
+        completedExercises++;
+      }
+    }
+    final totalExercises = exercises.length;
+    final progressPercent = totalExercises > 0
+        ? ((completedExercises / totalExercises) * 100).round()
+        : 0;
+
+    return Card(
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+          width: 2,
+        ),
+      ),
+      child: InkWell(
+        onTap: () => context.go('/workouts'),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator(
+                        value: progressPercent / 100,
+                        strokeWidth: 3,
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    Icon(
+                      Icons.play_arrow,
+                      color: theme.colorScheme.primary,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Resume Active Workout',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$dayName • $completedExercises of $totalExercises exercises ($progressPercent%)',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class WorkoutHistoryCard extends ConsumerWidget {
   final domain.WorkoutSession session;
 
@@ -434,58 +609,107 @@ class WorkoutHistoryCard extends ConsumerWidget {
         ? '${session.programSnapshot!['programName']} - ${session.programSnapshot!['dayName']}'
         : 'Freestyle Workout';
 
+    final statusBadge = session.status == domain.WorkoutStatus.completed
+        ? _StatusBadge(label: 'Completed', color: Colors.green)
+        : session.status == domain.WorkoutStatus.inProgress
+        ? _StatusBadge(label: 'Draft', color: Colors.blue)
+        : null;
+
     return Card(
       child: InkWell(
         onTap: () => context.push('/workouts/${session.id.value}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                titleText,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.fitness_center,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                session.workoutDate.toIso8601(),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            titleText,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (statusBadge != null) statusBadge,
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${session.workoutDate.year}-${session.workoutDate.month.toString().padLeft(2, '0')}-${session.workoutDate.day.toString().padLeft(2, '0')}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (session.finishedAt != null) ...[
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDuration(
+                              session.finishedAt!.difference(session.startedAt),
+                            ),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        exercisesAsync.when(
+                          data: (exercises) => Row(
+                            children: [
+                              Icon(
+                                Icons.fitness_center,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${exercises.length} ${exercises.length == 1 ? 'exercise' : 'exercises'}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                          loading: () => const SizedBox.shrink(),
+                          error: (error, _) => const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              exercisesAsync.when(
-                data: (exercises) => Text(
-                  '${exercises.length} ${exercises.length == 1 ? 'exercise' : 'exercises'}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                loading: () => Text(
-                  '...',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                error: (error, _) => Text(
-                  'Error',
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              if (session.finishedAt != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  _formatDuration(
-                    session.finishedAt!.difference(session.startedAt),
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -503,628 +727,42 @@ class WorkoutHistoryCard extends ConsumerWidget {
   }
 }
 
-class ActiveWorkoutEditor extends ConsumerStatefulWidget {
-  const ActiveWorkoutEditor({super.key});
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
 
-  @override
-  ConsumerState<ActiveWorkoutEditor> createState() =>
-      _ActiveWorkoutEditorState();
-}
-
-class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
-  final _repsControllers = <String, TextEditingController>{};
-  final _weightControllers = <String, TextEditingController>{};
-  final _restTimer = RestTimerNotifier();
-  bool _isFinishing = false;
-  DateTime? _startTime;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      final session = ref.read(activeWorkoutProvider).session;
-      if (session != null) {
-        setState(() => _startTime = session.startedAt);
-      }
-    });
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _restTimer.dispose();
-    for (final c in _repsControllers.values) {
-      c.dispose();
-    }
-    for (final c in _weightControllers.values) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  TextEditingController _getRepsController(domain.PerformedSet set) {
-    final key = set.id.value;
-    final currentValue = set.reps?.toString() ?? '';
-
-    if (!_repsControllers.containsKey(key)) {
-      _repsControllers[key] = TextEditingController(text: currentValue);
-    } else {
-      final controller = _repsControllers[key]!;
-      if (controller.text != currentValue && !controller.selection.isValid) {
-        controller.text = currentValue;
-      }
-    }
-    return _repsControllers[key]!;
-  }
-
-  TextEditingController _getWeightController(domain.PerformedSet set) {
-    final key = set.id.value;
-    final currentValue = set.loadGrams != null
-        ? set.loadGrams!.displayValue(WeightUnit.kg).toString()
-        : '';
-
-    if (!_weightControllers.containsKey(key)) {
-      _weightControllers[key] = TextEditingController(text: currentValue);
-    } else {
-      final controller = _weightControllers[key]!;
-      if (controller.text != currentValue && !controller.selection.isValid) {
-        controller.text = currentValue;
-      }
-    }
-    return _weightControllers[key]!;
-  }
-
-  Future<void> _confirmDiscard() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Discard Workout?'),
-        content: const Text(
-          'This will permanently delete your workout in progress.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Discard'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      await ref.read(activeWorkoutProvider.notifier).discardWorkout();
-    }
-  }
-
-  Future<void> _finishWorkout() async {
-    if (_isFinishing) return;
-
-    final activeWorkout = ref.read(activeWorkoutProvider);
-    final session = activeWorkout.session;
-    if (session == null) return;
-
-    final duration = DateTime.now().difference(session.startedAt);
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => WorkoutCompletionDialog(
-        session: session,
-        exercises: activeWorkout.exercises,
-        setsByExercise: activeWorkout.setsByExercise,
-        duration: duration,
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _isFinishing = true);
-
-    await ref.read(activeWorkoutProvider.notifier).finishWorkout();
-
-    if (mounted && ref.read(activeWorkoutProvider).session == null) {
-      // Refresh providers to update history and stats
-      ref.invalidate(workoutHistoryProvider);
-      ref.invalidate(workoutStatsProvider);
-      ref.invalidate(streakProvider);
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Workout saved')));
-    } else {
-      setState(() => _isFinishing = false);
-    }
-  }
-
-  String _getWorkoutTitle() {
-    final session = ref.read(activeWorkoutProvider).session;
-    if (session?.programSnapshot != null) {
-      return '${session!.programSnapshot!['programName']} - ${session.programSnapshot!['dayName']}';
-    }
-    return 'Freestyle Workout';
-  }
-
-  String _getElapsedTime() {
-    if (_startTime == null) return '0m';
-    final elapsed = DateTime.now().difference(_startTime!);
-    final hours = elapsed.inHours;
-    final minutes = elapsed.inMinutes.remainder(60);
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    }
-    return '${minutes}m';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final activeWorkout = ref.watch(activeWorkoutProvider);
-    final notifier = ref.read(activeWorkoutProvider.notifier);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Active Workout'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.close, color: Theme.of(context).colorScheme.error),
-            onPressed: _confirmDiscard,
-            tooltip: 'Discard',
-          ),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            icon: _isFinishing
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.check, size: 20),
-            label: const Text('Finish'),
-            onPressed: _isFinishing ? null : _finishWorkout,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              if (activeWorkout.error != null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
-                    border: Border.all(color: Theme.of(context).colorScheme.error),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    activeWorkout.error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
-                  ),
-                ),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getWorkoutTitle(),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.timer_outlined,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getElapsedTime(),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          if (!activeWorkout.isLoading) ...[
-                            Icon(
-                              Icons.check_circle_outline,
-                              color: Colors.green,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'All changes saved',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ] else ...[
-                            SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Saving...',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              RestTimerWidget(notifier: _restTimer),
-              if (_restTimer.isActive) const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      onPressed: () async {
-                        await showDialog(
-                          context: context,
-                          builder: (context) => ExercisePickerDialog(
-                            onExerciseSelected:
-                                (name, equipment, muscle) async {
-                                  await notifier.addExercise(
-                                    name,
-                                    equipment: equipment,
-                                    primaryMuscle: muscle,
-                                  );
-                                },
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Exercise'),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...activeWorkout.exercises.map((exercise) {
-                final sets =
-                    activeWorkout.setsByExercise[exercise.id.value] ?? [];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: ExerciseCard(
-                    exercise: exercise,
-                    sets: sets,
-                    onAddSet: () => notifier.addSet(exercise.id.value),
-                    onRemoveExercise: () =>
-                        notifier.removeExercise(exercise.id.value),
-                    onUpdateSet: notifier.updateSet,
-                    onRemoveSet: notifier.removeSet,
-                    onSetCompleted: () => _restTimer.start(90),
-                    getRepsController: _getRepsController,
-                    getWeightController: _getWeightController,
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ExerciseCard extends StatelessWidget {
-  final domain.PerformedExercise exercise;
-  final List<domain.PerformedSet> sets;
-  final VoidCallback onAddSet;
-  final VoidCallback onRemoveExercise;
-  final Future<void> Function(domain.PerformedSet) onUpdateSet;
-  final Future<void> Function(String) onRemoveSet;
-  final VoidCallback? onSetCompleted;
-  final TextEditingController Function(domain.PerformedSet) getRepsController;
-  final TextEditingController Function(domain.PerformedSet) getWeightController;
-
-  const ExerciseCard({
-    super.key,
-    required this.exercise,
-    required this.sets,
-    required this.onAddSet,
-    required this.onRemoveExercise,
-    required this.onUpdateSet,
-    required this.onRemoveSet,
-    this.onSetCompleted,
-    required this.getRepsController,
-    required this.getWeightController,
+  const _StatusBadge({
+    required this.label,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    exercise.snapshot.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                  onPressed: onRemoveExercise,
-                  tooltip: 'Remove exercise',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (sets.isEmpty)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  'No sets yet',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              )
-            else ...[
-              Row(
-                children: [
-                  SizedBox(
-                    width: 44,
-                    child: Text(
-                      'SET',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                  Expanded(
-                    child: Text(
-                      'REPS',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'KG',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  SizedBox(
-                    width: 88,
-                    child: Text(
-                      '✓',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ...sets.asMap().entries.map((entry) {
-                final index = entry.key;
-                final set = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _SetRow(
-                    set: set,
-                    index: index,
-                    onUpdateSet: onUpdateSet,
-                    onRemoveSet: onRemoveSet,
-                    onSetCompleted: onSetCompleted,
-                    repsController: getRepsController(set),
-                    weightController: getWeightController(set),
-                  ),
-                );
-              }),
-            ],
-            const SizedBox(height: 4),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: onAddSet,
-                child: const Text('+ Add Set'),
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
       ),
-    );
-  }
-}
-
-class _SetRow extends StatelessWidget {
-  final domain.PerformedSet set;
-  final int index;
-  final Future<void> Function(domain.PerformedSet) onUpdateSet;
-  final Future<void> Function(String) onRemoveSet;
-  final VoidCallback? onSetCompleted;
-  final TextEditingController repsController;
-  final TextEditingController weightController;
-
-  const _SetRow({
-    required this.set,
-    required this.index,
-    required this.onUpdateSet,
-    required this.onRemoveSet,
-    this.onSetCompleted,
-    required this.repsController,
-    required this.weightController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 44,
-          child: Text(
-            '${index + 1}',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            label == 'Completed' ? Icons.check_circle : Icons.edit,
+            size: 12,
+            color: color,
           ),
-        ),
-        PopupMenuButton<domain.SetType>(
-          initialValue: set.setType,
-          onSelected: (type) {
-            onUpdateSet(set.copyWith(setType: type));
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: domain.SetType.working,
-              child: Text('Working'),
-            ),
-            const PopupMenuItem(
-              value: domain.SetType.warmup,
-              child: Text('Warmup'),
-            ),
-          ],
-          child: Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: set.setType == domain.SetType.warmup
-                  ? Colors.blue.withValues(alpha: 0.2)
-                  : Colors.green.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              set.setType == domain.SetType.warmup ? 'W' : 'S',
-              style: TextStyle(
-                color: set.setType == domain.SetType.warmup
-                    ? Colors.blue
-                    : Colors.green,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            controller: repsController,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            decoration: const InputDecoration(
-              labelText: 'Reps',
-              floatingLabelBehavior: FloatingLabelBehavior.never,
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            ),
-            onChanged: (value) {
-              final reps = int.tryParse(value);
-              if (reps != null && reps >= 0) {
-                onUpdateSet(set.copyWith(reps: reps));
-              }
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            controller: weightController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textAlign: TextAlign.center,
-            decoration: const InputDecoration(
-              labelText: 'kg',
-              floatingLabelBehavior: FloatingLabelBehavior.never,
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            ),
-            onChanged: (value) {
-              final kg = double.tryParse(value);
-              if (kg != null && kg >= 0) {
-                try {
-                  onUpdateSet(set.copyWith(loadGrams: WeightGrams.fromKg(kg)));
-                } catch (e) {
-                  // Invalid weight, keep existing
-                }
-              }
-            },
-          ),
-        ),
-        const SizedBox(width: 4),
-        SizedBox(
-          width: 44,
-          height: 44,
-          child: Checkbox(
-            value: set.completed,
-            onChanged: (value) async {
-              final wasCompleted = set.completed;
-              await onUpdateSet(set.copyWith(completed: value ?? false));
-
-              if (!wasCompleted && (value ?? false) && onSetCompleted != null) {
-                onSetCompleted!();
-              }
-            },
-          ),
-        ),
-        SizedBox(
-          width: 44,
-          height: 44,
-          child: IconButton(
-            icon: Icon(Icons.close, color: Theme.of(context).colorScheme.error, size: 20),
-            onPressed: () => onRemoveSet(set.id.value),
-            tooltip: 'Remove set',
-            padding: EdgeInsets.zero,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

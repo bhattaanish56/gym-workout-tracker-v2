@@ -25,13 +25,13 @@ void main() {
       expect(1 <= 3 && 4 >= 4, true); // v1->v4 includes body weight
     });
 
-    test('database opens successfully at v6', () async {
+    test('database opens successfully at v7', () async {
       final db = AppDatabase.withQueryExecutor(NativeDatabase.memory());
 
       // Should create all tables without error
       await db.customSelect('SELECT 1').get();
 
-      expect(db.schemaVersion, 6);
+      expect(db.schemaVersion, 7);
 
       await db.close();
     });

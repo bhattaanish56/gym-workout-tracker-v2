@@ -5,7 +5,8 @@ import '../../../../core/domain/errors/domain_error.dart';
 /// Set type classification.
 enum SetType {
   warmup,
-  working;
+  working,
+  drop;
 
   String toJson() => name;
 
@@ -14,6 +15,17 @@ enum SetType {
       (e) => e.name == value,
       orElse: () => throw InvalidQuantityError('Invalid SetType: $value'),
     );
+  }
+
+  String get displayName {
+    switch (this) {
+      case SetType.warmup:
+        return 'Warmup';
+      case SetType.working:
+        return 'Work';
+      case SetType.drop:
+        return 'Drop';
+    }
   }
 }
 

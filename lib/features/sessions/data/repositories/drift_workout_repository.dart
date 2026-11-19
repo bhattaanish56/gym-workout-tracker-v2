@@ -39,6 +39,7 @@ class DriftWorkoutRepository implements WorkoutRepository {
                     ? jsonEncode(session.programSnapshot)
                     : null,
               ),
+              fulfilledScheduledDate: Value(session.fulfilledScheduledDate?.toIso8601()),
               createdAt: session.createdAt,
               updatedAt: session.updatedAt,
             ),
@@ -95,6 +96,7 @@ class DriftWorkoutRepository implements WorkoutRepository {
               ? jsonEncode(session.programSnapshot)
               : null,
         ),
+        fulfilledScheduledDate: Value(session.fulfilledScheduledDate?.toIso8601()),
         updatedAt: Value(session.updatedAt),
       ),
     );
@@ -272,6 +274,9 @@ class DriftWorkoutRepository implements WorkoutRepository {
       programDayId: row.programDayId,
       programSnapshot: row.programSnapshot != null
           ? jsonDecode(row.programSnapshot!) as Map<String, dynamic>
+          : null,
+      fulfilledScheduledDate: row.fulfilledScheduledDate != null
+          ? LocalDate.parse(row.fulfilledScheduledDate!)
           : null,
       createdAt: row.createdAt.toUtc(),
       updatedAt: row.updatedAt.toUtc(),

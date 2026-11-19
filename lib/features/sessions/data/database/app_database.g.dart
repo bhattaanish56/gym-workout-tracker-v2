@@ -104,6 +104,17 @@ class $WorkoutSessionsTable extends WorkoutSessions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _fulfilledScheduledDateMeta =
+      const VerificationMeta('fulfilledScheduledDate');
+  @override
+  late final GeneratedColumn<String> fulfilledScheduledDate =
+      GeneratedColumn<String>(
+        'fulfilled_scheduled_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -137,6 +148,7 @@ class $WorkoutSessionsTable extends WorkoutSessions
     programId,
     programDayId,
     programSnapshot,
+    fulfilledScheduledDate,
     createdAt,
     updatedAt,
   ];
@@ -222,6 +234,15 @@ class $WorkoutSessionsTable extends WorkoutSessions
         ),
       );
     }
+    if (data.containsKey('fulfilled_scheduled_date')) {
+      context.handle(
+        _fulfilledScheduledDateMeta,
+        fulfilledScheduledDate.isAcceptableOrUnknown(
+          data['fulfilled_scheduled_date']!,
+          _fulfilledScheduledDateMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -283,6 +304,10 @@ class $WorkoutSessionsTable extends WorkoutSessions
         DriftSqlType.string,
         data['${effectivePrefix}program_snapshot'],
       ),
+      fulfilledScheduledDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fulfilled_scheduled_date'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -310,6 +335,7 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   final String? programId;
   final String? programDayId;
   final String? programSnapshot;
+  final String? fulfilledScheduledDate;
   final DateTime createdAt;
   final DateTime updatedAt;
   const WorkoutSession({
@@ -322,6 +348,7 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     this.programId,
     this.programDayId,
     this.programSnapshot,
+    this.fulfilledScheduledDate,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -344,6 +371,11 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     }
     if (!nullToAbsent || programSnapshot != null) {
       map['program_snapshot'] = Variable<String>(programSnapshot);
+    }
+    if (!nullToAbsent || fulfilledScheduledDate != null) {
+      map['fulfilled_scheduled_date'] = Variable<String>(
+        fulfilledScheduledDate,
+      );
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -369,6 +401,9 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       programSnapshot: programSnapshot == null && nullToAbsent
           ? const Value.absent()
           : Value(programSnapshot),
+      fulfilledScheduledDate: fulfilledScheduledDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fulfilledScheduledDate),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -389,6 +424,9 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       programId: serializer.fromJson<String?>(json['programId']),
       programDayId: serializer.fromJson<String?>(json['programDayId']),
       programSnapshot: serializer.fromJson<String?>(json['programSnapshot']),
+      fulfilledScheduledDate: serializer.fromJson<String?>(
+        json['fulfilledScheduledDate'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -406,6 +444,9 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       'programId': serializer.toJson<String?>(programId),
       'programDayId': serializer.toJson<String?>(programDayId),
       'programSnapshot': serializer.toJson<String?>(programSnapshot),
+      'fulfilledScheduledDate': serializer.toJson<String?>(
+        fulfilledScheduledDate,
+      ),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -421,6 +462,7 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     Value<String?> programId = const Value.absent(),
     Value<String?> programDayId = const Value.absent(),
     Value<String?> programSnapshot = const Value.absent(),
+    Value<String?> fulfilledScheduledDate = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => WorkoutSession(
@@ -435,6 +477,9 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     programSnapshot: programSnapshot.present
         ? programSnapshot.value
         : this.programSnapshot,
+    fulfilledScheduledDate: fulfilledScheduledDate.present
+        ? fulfilledScheduledDate.value
+        : this.fulfilledScheduledDate,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -459,6 +504,9 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       programSnapshot: data.programSnapshot.present
           ? data.programSnapshot.value
           : this.programSnapshot,
+      fulfilledScheduledDate: data.fulfilledScheduledDate.present
+          ? data.fulfilledScheduledDate.value
+          : this.fulfilledScheduledDate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -476,6 +524,7 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
           ..write('programId: $programId, ')
           ..write('programDayId: $programDayId, ')
           ..write('programSnapshot: $programSnapshot, ')
+          ..write('fulfilledScheduledDate: $fulfilledScheduledDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -493,6 +542,7 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     programId,
     programDayId,
     programSnapshot,
+    fulfilledScheduledDate,
     createdAt,
     updatedAt,
   );
@@ -509,6 +559,7 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
           other.programId == this.programId &&
           other.programDayId == this.programDayId &&
           other.programSnapshot == this.programSnapshot &&
+          other.fulfilledScheduledDate == this.fulfilledScheduledDate &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -523,6 +574,7 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
   final Value<String?> programId;
   final Value<String?> programDayId;
   final Value<String?> programSnapshot;
+  final Value<String?> fulfilledScheduledDate;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -536,6 +588,7 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
     this.programId = const Value.absent(),
     this.programDayId = const Value.absent(),
     this.programSnapshot = const Value.absent(),
+    this.fulfilledScheduledDate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -550,6 +603,7 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
     this.programId = const Value.absent(),
     this.programDayId = const Value.absent(),
     this.programSnapshot = const Value.absent(),
+    this.fulfilledScheduledDate = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -570,6 +624,7 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
     Expression<String>? programId,
     Expression<String>? programDayId,
     Expression<String>? programSnapshot,
+    Expression<String>? fulfilledScheduledDate,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -584,6 +639,8 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
       if (programId != null) 'program_id': programId,
       if (programDayId != null) 'program_day_id': programDayId,
       if (programSnapshot != null) 'program_snapshot': programSnapshot,
+      if (fulfilledScheduledDate != null)
+        'fulfilled_scheduled_date': fulfilledScheduledDate,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -600,6 +657,7 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
     Value<String?>? programId,
     Value<String?>? programDayId,
     Value<String?>? programSnapshot,
+    Value<String?>? fulfilledScheduledDate,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -614,6 +672,8 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
       programId: programId ?? this.programId,
       programDayId: programDayId ?? this.programDayId,
       programSnapshot: programSnapshot ?? this.programSnapshot,
+      fulfilledScheduledDate:
+          fulfilledScheduledDate ?? this.fulfilledScheduledDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -650,6 +710,11 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
     if (programSnapshot.present) {
       map['program_snapshot'] = Variable<String>(programSnapshot.value);
     }
+    if (fulfilledScheduledDate.present) {
+      map['fulfilled_scheduled_date'] = Variable<String>(
+        fulfilledScheduledDate.value,
+      );
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -674,6 +739,7 @@ class WorkoutSessionsCompanion extends UpdateCompanion<WorkoutSession> {
           ..write('programId: $programId, ')
           ..write('programDayId: $programDayId, ')
           ..write('programSnapshot: $programSnapshot, ')
+          ..write('fulfilledScheduledDate: $fulfilledScheduledDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -4930,6 +4996,7 @@ typedef $$WorkoutSessionsTableCreateCompanionBuilder =
       Value<String?> programId,
       Value<String?> programDayId,
       Value<String?> programSnapshot,
+      Value<String?> fulfilledScheduledDate,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -4945,6 +5012,7 @@ typedef $$WorkoutSessionsTableUpdateCompanionBuilder =
       Value<String?> programId,
       Value<String?> programDayId,
       Value<String?> programSnapshot,
+      Value<String?> fulfilledScheduledDate,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -5032,6 +5100,11 @@ class $$WorkoutSessionsTableFilterComposer
 
   ColumnFilters<String> get programSnapshot => $composableBuilder(
     column: $table.programSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fulfilledScheduledDate => $composableBuilder(
+    column: $table.fulfilledScheduledDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5125,6 +5198,11 @@ class $$WorkoutSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get fulfilledScheduledDate => $composableBuilder(
+    column: $table.fulfilledScheduledDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5179,6 +5257,11 @@ class $$WorkoutSessionsTableAnnotationComposer
 
   GeneratedColumn<String> get programSnapshot => $composableBuilder(
     column: $table.programSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fulfilledScheduledDate => $composableBuilder(
+    column: $table.fulfilledScheduledDate,
     builder: (column) => column,
   );
 
@@ -5254,6 +5337,7 @@ class $$WorkoutSessionsTableTableManager
                 Value<String?> programId = const Value.absent(),
                 Value<String?> programDayId = const Value.absent(),
                 Value<String?> programSnapshot = const Value.absent(),
+                Value<String?> fulfilledScheduledDate = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -5267,6 +5351,7 @@ class $$WorkoutSessionsTableTableManager
                 programId: programId,
                 programDayId: programDayId,
                 programSnapshot: programSnapshot,
+                fulfilledScheduledDate: fulfilledScheduledDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -5282,6 +5367,7 @@ class $$WorkoutSessionsTableTableManager
                 Value<String?> programId = const Value.absent(),
                 Value<String?> programDayId = const Value.absent(),
                 Value<String?> programSnapshot = const Value.absent(),
+                Value<String?> fulfilledScheduledDate = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -5295,6 +5381,7 @@ class $$WorkoutSessionsTableTableManager
                 programId: programId,
                 programDayId: programDayId,
                 programSnapshot: programSnapshot,
+                fulfilledScheduledDate: fulfilledScheduledDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

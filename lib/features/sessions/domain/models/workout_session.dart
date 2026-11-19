@@ -44,11 +44,12 @@ class WorkoutSession {
   final WorkoutSourceType sourceType;
   final DateTime startedAt;
   final DateTime? finishedAt;
-  final LocalDate workoutDate;
+  final LocalDate workoutDate; // Actual training date
   final WorkoutStatus status;
   final String? programId;
   final String? programDayId;
   final Map<String, dynamic>? programSnapshot;
+  final LocalDate? fulfilledScheduledDate; // For early completion: which scheduled date was fulfilled
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -62,6 +63,7 @@ class WorkoutSession {
     this.programId,
     this.programDayId,
     this.programSnapshot,
+    this.fulfilledScheduledDate,
     required this.createdAt,
     required this.updatedAt,
   }) {

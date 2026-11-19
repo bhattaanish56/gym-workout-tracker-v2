@@ -28,83 +28,227 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
       equipmentFilter: _equipmentFilter,
     );
     final exercisesAsync = ref.watch(exerciseSearchProvider(searchParams));
+    final theme = Theme.of(context);
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
+            // Header with logo
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Exercises',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'M',
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Gym Workout Tracker V2',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Track • Train • Progress',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+
+            // Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Exercises',
+                  style: theme.textTheme.headlineLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search exercises',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+                onChanged: (value) => setState(() => _searchQuery = value),
+              ),
+            ),
+
+            // Muscle filter chips
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text('All Muscles'),
+                    selected: _muscleFilter == null,
+                    onSelected: (_) => setState(() => _muscleFilter = null),
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: theme.colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: _muscleFilter == null
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurface,
+                      fontWeight: _muscleFilter == null ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Chest'),
+                    selected: _muscleFilter == MuscleGroup.chest,
+                    onSelected: (_) => setState(() => _muscleFilter = MuscleGroup.chest),
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: theme.colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: _muscleFilter == MuscleGroup.chest
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurface,
+                      fontWeight: _muscleFilter == MuscleGroup.chest ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Back'),
+                    selected: _muscleFilter == MuscleGroup.back,
+                    onSelected: (_) => setState(() => _muscleFilter = MuscleGroup.back),
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: theme.colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: _muscleFilter == MuscleGroup.back
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurface,
+                      fontWeight: _muscleFilter == MuscleGroup.back ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Legs'),
+                    selected: _muscleFilter == MuscleGroup.legs,
+                    onSelected: (_) => setState(() => _muscleFilter = MuscleGroup.legs),
+                    backgroundColor: theme.colorScheme.surface,
+                    selectedColor: theme.colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: _muscleFilter == MuscleGroup.legs
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurface,
+                      fontWeight: _muscleFilter == MuscleGroup.legs ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              child: TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Search exercises',
-                  prefixIcon: Icon(Icons.search),
-                ),
-                onChanged: (value) => setState(() => _searchQuery = value),
-              ),
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  FilterChip(
-                    label: const Text('All Muscles'),
-                    selected: _muscleFilter == null,
-                    onSelected: (_) => setState(() => _muscleFilter = null),
-                  ),
-                  const SizedBox(width: 8),
-                  ...MuscleGroup.values.map((muscle) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(muscle.label),
-                        selected: _muscleFilter == muscle,
-                        onSelected: (_) =>
-                            setState(() => _muscleFilter = muscle),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
             const SizedBox(height: 8),
+
+            // Equipment filter chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  FilterChip(
+                  ChoiceChip(
                     label: const Text('All Equipment'),
                     selected: _equipmentFilter == null,
                     onSelected: (_) => setState(() => _equipmentFilter = null),
+                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                    side: _equipmentFilter == null
+                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
+                        : null,
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: _equipmentFilter == null ? FontWeight.bold : FontWeight.normal,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  ...Equipment.values.map((equip) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(equip.label),
-                        selected: _equipmentFilter == equip,
-                        onSelected: (_) =>
-                            setState(() => _equipmentFilter = equip),
-                      ),
-                    );
-                  }),
+                  ChoiceChip(
+                    label: const Text('Barbell'),
+                    selected: _equipmentFilter == Equipment.barbell,
+                    onSelected: (_) => setState(() => _equipmentFilter = Equipment.barbell),
+                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                    side: _equipmentFilter == Equipment.barbell
+                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
+                        : null,
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: _equipmentFilter == Equipment.barbell ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Dumbbell'),
+                    selected: _equipmentFilter == Equipment.dumbbell,
+                    onSelected: (_) => setState(() => _equipmentFilter = Equipment.dumbbell),
+                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                    side: _equipmentFilter == Equipment.dumbbell
+                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
+                        : null,
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: _equipmentFilter == Equipment.dumbbell ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Bodyweight'),
+                    selected: _equipmentFilter == Equipment.bodyweight,
+                    onSelected: (_) => setState(() => _equipmentFilter = Equipment.bodyweight),
+                    backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                    side: _equipmentFilter == Equipment.bodyweight
+                        ? BorderSide(color: theme.colorScheme.secondary, width: 1.5)
+                        : null,
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: _equipmentFilter == Equipment.bodyweight ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -169,16 +313,23 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await showDialog(
-            context: context,
-            builder: (context) => const CreateCustomExerciseDialog(),
-          );
-          ref.invalidate(exerciseSearchProvider);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Custom Exercise'),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 60),
+        child: FloatingActionButton.extended(
+          onPressed: () async {
+            await showDialog(
+              context: context,
+              builder: (context) => const CreateCustomExerciseDialog(),
+            );
+            ref.invalidate(exerciseSearchProvider);
+          },
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          icon: const Icon(Icons.add, size: 24),
+          label: const Text(
+            'Custom Exercise',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
       ),
     );
   }

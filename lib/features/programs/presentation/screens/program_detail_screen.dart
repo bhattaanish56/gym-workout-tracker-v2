@@ -225,6 +225,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
   Future<void> _activateProgram(Program program) async {
     final repo = ref.read(programRepositoryProvider);
     await repo.activateProgram(program.id);
+    ref.invalidate(activeProgramProvider);
+    ref.invalidate(nextPlannedWorkoutProvider);
+    ref.invalidate(allProgramsProvider);
     setState(() {});
   }
 
@@ -232,6 +235,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
     final repo = ref.read(programRepositoryProvider);
     final updated = program.copyWith(status: ProgramStatus.draft);
     await repo.updateProgram(updated);
+    ref.invalidate(activeProgramProvider);
+    ref.invalidate(nextPlannedWorkoutProvider);
+    ref.invalidate(allProgramsProvider);
     setState(() {});
   }
 

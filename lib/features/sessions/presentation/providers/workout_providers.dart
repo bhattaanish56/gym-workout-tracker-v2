@@ -149,10 +149,14 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
   }
 
   /// Starts a planned workout from program day
+  /// [scheduledDate] - optional scheduled date being fulfilled (for early completion)
+  /// workoutDate will always be today (actual training date)
+  /// scheduledDate is stored separately to track which assignment was fulfilled
   Future<void> startPlannedWorkout(
     String programId,
-    String programDayId,
-  ) async {
+    String programDayId, {
+    LocalDate? scheduledDate,
+  }) async {
     try {
       final existing = await _repository.getActiveSession();
       if (existing != null) {
@@ -183,6 +187,8 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
 
       final sessionId = _uuid.v4();
       final now = DateTime.now().toUtc();
+      final today = LocalDate.fromDateTime(now.toLocal());
+
       final session = domain.WorkoutSession(
         id: RecordId(sessionId),
         sourceType: domain.WorkoutSourceType.programDay,
@@ -194,7 +200,8 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
           'dayOrderIndex': day.orderIndex,
         },
         startedAt: now,
-        workoutDate: LocalDate.fromDateTime(now.toLocal()),
+        workoutDate: today, // Always today (actual training date)
+        fulfilledScheduledDate: scheduledDate, // Which scheduled date was fulfilled (if early)
         status: domain.WorkoutStatus.inProgress,
         createdAt: now,
         updatedAt: now,

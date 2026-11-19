@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'app_shell.dart';
-import '../features/home/presentation/screens/home_screen.dart';
-import '../features/sessions/presentation/screens/workouts_screen.dart';
+import '../features/home/presentation/screens/home_screen_redesign.dart';
+import '../features/sessions/presentation/screens/workouts_hub_screen.dart';
 import '../features/sessions/presentation/screens/workout_detail_screen.dart';
+import '../features/sessions/presentation/screens/workout_history_screen.dart';
 import '../features/exercises/presentation/screens/exercises_screen.dart';
 import '../features/exercises/presentation/screens/exercise_detail_screen.dart';
 import '../features/programs/presentation/screens/programs_screen.dart';
@@ -31,7 +32,7 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
                 path: '/home',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: HomeScreen(
+                  child: HomeScreenRedesign(
                     key: const Key('page-home'),
                     onViewWorkouts: () => context.go('/workouts'),
                     onBrowseExercises: () => context.go('/exercises'),
@@ -48,9 +49,15 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
                 path: '/workouts',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const WorkoutsScreen(key: Key('page-workouts')),
+                  child: const WorkoutsHubScreen(key: Key('page-workouts')),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'history',
+                    builder: (context, state) {
+                      return const WorkoutHistoryScreen();
+                    },
+                  ),
                   GoRoute(
                     path: 'programs',
                     pageBuilder: (context, state) {
