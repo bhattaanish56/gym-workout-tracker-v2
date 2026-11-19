@@ -5,6 +5,47 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/repositories/drift_progress_repository.dart';
 import '../../domain/services/progress_analytics_service.dart';
 import '../../domain/models/bodyweight_entry.dart';
+import '../../domain/models/time_range.dart';
+
+// Time range state - using NotifierProvider pattern for Riverpod 3
+class GlobalTimeRangeNotifier extends Notifier<TimeRange> {
+  @override
+  TimeRange build() => TimeRange.month;
+
+  void setRange(TimeRange range) {
+    state = range;
+  }
+}
+
+class BodyWeightTimeRangeNotifier extends Notifier<TimeRange> {
+  @override
+  TimeRange build() => TimeRange.month;
+
+  void setRange(TimeRange range) {
+    state = range;
+  }
+}
+
+class SelectedExerciseIdNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void setExercise(String? id) {
+    state = id;
+  }
+}
+
+final globalTimeRangeProvider = NotifierProvider<GlobalTimeRangeNotifier, TimeRange>(() {
+  return GlobalTimeRangeNotifier();
+});
+
+final bodyWeightTimeRangeProvider = NotifierProvider<BodyWeightTimeRangeNotifier, TimeRange>(() {
+  return BodyWeightTimeRangeNotifier();
+});
+
+final selectedExerciseIdProvider = NotifierProvider<SelectedExerciseIdNotifier, String?>(() {
+  return SelectedExerciseIdNotifier();
+});
 
 final progressRepositoryProvider = Provider<DriftProgressRepository>((ref) {
   final db = ref.watch(databaseProvider);
@@ -22,7 +63,9 @@ final bodyWeightHistoryProvider = FutureProvider<List<BodyWeightEntry>>((
   ref,
 ) async {
   final repo = ref.watch(progressRepositoryProvider);
-  return repo.getBodyWeightHistory(limit: 30);
+  final timeRange = ref.watch(bodyWeightTimeRangeProvider);
+  final startDate = timeRange.getStartDate();
+  return repo.getBodyWeightHistory(limit: 100, startDate: startDate);
 });
 
 final latestBodyWeightProvider = FutureProvider<BodyWeightEntry?>((ref) async {
@@ -39,10 +82,13 @@ final userHeightProvider = FutureProvider<int?>((ref) async {
 
 final workoutStatsProvider = FutureProvider<Map<String, int>>((ref) async {
   final analytics = ref.watch(progressAnalyticsProvider);
-  final total = await analytics.getTotalCompletedWorkouts();
+  final timeRange = ref.watch(globalTimeRangeProvider);
+  final startDate = timeRange.getStartDate();
+
+  final total = await analytics.getTotalCompletedWorkouts(startDate: startDate);
   final thisWeek = await analytics.getWorkoutsThisWeek();
-  final totalSets = await analytics.getTotalCompletedSets();
-  final totalVolume = await analytics.getTotalVolume();
+  final totalSets = await analytics.getTotalCompletedSets(startDate: startDate);
+  final totalVolume = await analytics.getTotalVolume(startDate: startDate);
 
   return {
     'total': total,

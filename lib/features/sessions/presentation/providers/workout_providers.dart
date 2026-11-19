@@ -13,8 +13,10 @@ import '../../../programs/domain/repositories/program_repository.dart';
 import '../../../programs/data/repositories/drift_program_repository.dart';
 import '../../../programs/domain/models/program.dart' as domain;
 import '../../../programs/domain/models/rotation_state.dart' as domain;
+import '../../../programs/presentation/providers/program_providers.dart';
 import '../../../exercises/domain/repositories/exercise_repository.dart';
 import '../../../exercises/data/repositories/drift_exercise_repository.dart';
+import '../../../exercises/presentation/providers/exercise_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../sync/domain/sync_hooks.dart';
 import '../../../sync/presentation/providers/sync_providers.dart';
@@ -83,18 +85,15 @@ class ActiveWorkoutState {
 
 /// Active workout notifier (Riverpod 3 pattern)
 class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
-  late final WorkoutRepository _repository;
-  late final ProgramRepository _programRepository;
-  late final ExerciseRepository _exerciseRepository;
+  WorkoutRepository get _repository => ref.read(workoutRepositoryProvider);
+  ProgramRepository get _programRepository => ref.read(programRepositoryProvider);
+  ExerciseRepository get _exerciseRepository => ref.read(exerciseRepositoryProvider);
   Future<void>? _pendingWrite;
 
   @override
   ActiveWorkoutState build() {
-    _repository = ref.watch(workoutRepositoryProvider);
-    final db = ref.watch(databaseProvider);
-    final userId = ref.watch(currentUserIdProvider);
-    _programRepository = DriftProgramRepository(db, userId);
-    _exerciseRepository = DriftExerciseRepository(db, userId);
+    // Trigger rebuild when userId changes (account switch)
+    ref.watch(currentUserIdProvider);
     _loadActiveSession();
     return const ActiveWorkoutState();
   }
@@ -243,6 +242,7 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
             sessionId: session.id,
             orderIndex: planned.orderIndex,
             snapshot: domain.ExerciseSnapshot(
+              id: exerciseData.id,
               name: exerciseData.canonicalName,
               equipment: exerciseData.equipment.toJson(),
               primaryMuscle: exerciseData.primaryMuscle.toJson(),
@@ -285,6 +285,7 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
 
   /// Adds an exercise to the active workout
   Future<void> addExercise(
+    String exerciseId,
     String exerciseName, {
     String? equipment,
     String? primaryMuscle,
@@ -296,6 +297,7 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
       sessionId: state.session!.id,
       orderIndex: state.exercises.length,
       snapshot: domain.ExerciseSnapshot(
+        id: exerciseId,
         name: exerciseName,
         equipment: equipment,
         primaryMuscle: primaryMuscle,
@@ -489,9 +491,11 @@ final activeWorkoutProvider =
     });
 
 /// Workout history provider
-final workoutHistoryProvider = FutureProvider<List<domain.WorkoutSession>>((
+final workoutHistoryProvider = FutureProvider.autoDispose<List<domain.WorkoutSession>>((
   ref,
 ) async {
+  // Depend on userId to invalidate when account changes
+  ref.watch(currentUserIdProvider);
   final repository = ref.watch(workoutRepositoryProvider);
   return repository.getAllSessions();
 });

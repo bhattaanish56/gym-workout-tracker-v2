@@ -57,6 +57,7 @@ void main() {
         sessionId: RecordId(sessionId),
         orderIndex: 0,
         snapshot: ExerciseSnapshot(
+          id: 'bench_press',
           name: 'Bench Press',
           equipment: 'barbell',
           primaryMuscle: 'chest',
@@ -123,6 +124,7 @@ void main() {
         sessionId: RecordId(sessionId),
         orderIndex: 0,
         snapshot: ExerciseSnapshot(
+          id: 'squat',
           name: 'Squat',
           equipment: 'barbell',
           primaryMuscle: 'quads',

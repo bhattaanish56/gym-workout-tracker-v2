@@ -9,9 +9,19 @@ class ProgressAnalyticsService {
 
   ProgressAnalyticsService(this._db, this.userId);
 
-  Future<int> getTotalCompletedWorkouts() async {
+  Future<int> getTotalCompletedWorkouts({DateTime? startDate}) async {
+    if (startDate == null) {
+      return await (_db.workoutSessions.count(
+        where: (t) => t.status.equals('completed') & t.userId.equals(userId),
+      )).getSingle();
+    }
+
+    final startDateStr = LocalDate.fromDateTime(startDate).toIso8601();
     return await (_db.workoutSessions.count(
-      where: (t) => t.status.equals('completed') & t.userId.equals(userId),
+      where: (t) =>
+        t.status.equals('completed') &
+        t.userId.equals(userId) &
+        t.workoutDate.isBiggerOrEqualValue(startDateStr),
     )).getSingle();
   }
 
@@ -28,25 +38,36 @@ class ProgressAnalyticsService {
     )).getSingle();
   }
 
-  Future<int> getTotalCompletedSets() async {
-    final result = await (_db.selectOnly(_db.performedSets)
-          ..addColumns([_db.performedSets.id.count()])
-          ..join([
-            innerJoin(
-              _db.performedExercises,
-              _db.performedExercises.id.equalsExp(_db.performedSets.performedExerciseId),
-            ),
-            innerJoin(
-              _db.workoutSessions,
-              _db.workoutSessions.id.equalsExp(_db.performedExercises.sessionId),
-            ),
-          ])
-          ..where(_db.performedSets.completed.equals(true) & _db.workoutSessions.userId.equals(userId)))
-        .getSingle();
+  Future<int> getTotalCompletedSets({DateTime? startDate}) async {
+    final query = _db.selectOnly(_db.performedSets)
+      ..addColumns([_db.performedSets.id.count()])
+      ..join([
+        innerJoin(
+          _db.performedExercises,
+          _db.performedExercises.id.equalsExp(_db.performedSets.performedExerciseId),
+        ),
+        innerJoin(
+          _db.workoutSessions,
+          _db.workoutSessions.id.equalsExp(_db.performedExercises.sessionId),
+        ),
+      ]);
+
+    if (startDate == null) {
+      query.where(_db.performedSets.completed.equals(true) & _db.workoutSessions.userId.equals(userId));
+    } else {
+      final startDateStr = LocalDate.fromDateTime(startDate).toIso8601();
+      query.where(
+        _db.performedSets.completed.equals(true) &
+        _db.workoutSessions.userId.equals(userId) &
+        _db.workoutSessions.workoutDate.isBiggerOrEqualValue(startDateStr)
+      );
+    }
+
+    final result = await query.getSingle();
     return result.read(_db.performedSets.id.count()) ?? 0;
   }
 
-  Future<int> getTotalVolume() async {
+  Future<int> getTotalVolume({DateTime? startDate}) async {
     final query = _db.select(_db.performedSets).join([
       innerJoin(
         _db.performedExercises,
@@ -56,13 +77,25 @@ class ProgressAnalyticsService {
         _db.workoutSessions,
         _db.workoutSessions.id.equalsExp(_db.performedExercises.sessionId),
       ),
-    ])
-      ..where(
+    ]);
+
+    if (startDate == null) {
+      query.where(
         _db.performedSets.completed.equals(true) &
             _db.performedSets.loadGrams.isNotNull() &
             _db.performedSets.reps.isNotNull() &
             _db.workoutSessions.userId.equals(userId),
       );
+    } else {
+      final startDateStr = LocalDate.fromDateTime(startDate).toIso8601();
+      query.where(
+        _db.performedSets.completed.equals(true) &
+            _db.performedSets.loadGrams.isNotNull() &
+            _db.performedSets.reps.isNotNull() &
+            _db.workoutSessions.userId.equals(userId) &
+            _db.workoutSessions.workoutDate.isBiggerOrEqualValue(startDateStr),
+      );
+    }
 
     final results = await query.get();
 
@@ -182,6 +215,7 @@ class ProgressAnalyticsService {
       final exercise = row.readTable(_db.performedExercises);
       final snapshotJson = exercise.snapshotJson;
 
+      // Match by exercise ID in snapshot
       if (snapshotJson.contains('"id":"${exerciseId.value}"')) {
         final set = row.readTable(_db.performedSets);
         final session = row.readTable(_db.workoutSessions);

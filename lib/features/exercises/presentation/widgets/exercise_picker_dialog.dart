@@ -5,7 +5,7 @@ import '../../domain/models/exercise.dart';
 import '../providers/exercise_providers.dart';
 
 class ExercisePickerDialog extends ConsumerStatefulWidget {
-  final Function(String name, String? equipment, String? primaryMuscle)
+  final Function(String id, String name, String? equipment, String? primaryMuscle)
   onExerciseSelected;
 
   const ExercisePickerDialog({super.key, required this.onExerciseSelected});
@@ -86,6 +86,9 @@ class _ExercisePickerDialogState extends ConsumerState<ExercisePickerDialog> {
                     itemCount: exercises.length,
                     itemBuilder: (context, index) {
                       final exercise = exercises[index];
+                      final id = exercise is Exercise
+                          ? exercise.id
+                          : (exercise as CustomExercise).id.value;
                       final name = exercise is Exercise
                           ? exercise.canonicalName
                           : (exercise as CustomExercise).name;
@@ -101,7 +104,7 @@ class _ExercisePickerDialogState extends ConsumerState<ExercisePickerDialog> {
                         margin: const EdgeInsets.only(bottom: 8),
                         child: InkWell(
                           onTap: () {
-                            widget.onExerciseSelected(name, equipment, muscle);
+                            widget.onExerciseSelected(id, name, equipment, muscle);
                             Navigator.of(context).pop();
                           },
                           borderRadius: BorderRadius.circular(12),

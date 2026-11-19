@@ -195,11 +195,11 @@ class _ProgramDayEditorScreenState
     showDialog(
       context: context,
       builder: (context) => ExercisePickerDialog(
-        onExerciseSelected: (name, equipment, primaryMuscle) async {
+        onExerciseSelected: (id, name, equipment, primaryMuscle) async {
           final repo = ref.read(programRepositoryProvider);
           final allExercises = ref.read(allExercisesProvider).value ?? [];
           final selectedExercise = allExercises
-              .where((e) => e.canonicalName == name)
+              .where((e) => e.id == id)
               .firstOrNull;
 
           if (selectedExercise == null) return;

@@ -446,8 +446,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                         await showDialog(
                           context: context,
                           builder: (context) => ExercisePickerDialog(
-                            onExerciseSelected: (name, equipment, muscle) async {
+                            onExerciseSelected: (id, name, equipment, muscle) async {
                               await notifier.addExercise(
+                                id,
                                 name,
                                 equipment: equipment,
                                 primaryMuscle: muscle,

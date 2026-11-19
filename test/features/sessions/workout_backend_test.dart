@@ -53,7 +53,7 @@ void main() {
         id: RecordId('ex-1'),
         sessionId: RecordId('session-2'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Bench Press'),
+        snapshot: const domain.ExerciseSnapshot(id: 'bench_press', name: 'Bench Press'),
       );
 
       final set1 = domain.PerformedSet(
@@ -106,7 +106,7 @@ void main() {
         id: RecordId('ex-2'),
         sessionId: RecordId('session-4'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Squat'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Squat'),
       );
 
       final set1 = domain.PerformedSet(
@@ -140,21 +140,21 @@ void main() {
         id: RecordId('ex-3'),
         sessionId: RecordId('session-5'),
         orderIndex: 2,
-        snapshot: const domain.ExerciseSnapshot(name: 'Third'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Third'),
       );
 
       final ex2 = domain.PerformedExercise(
         id: RecordId('ex-4'),
         sessionId: RecordId('session-5'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'First'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'First'),
       );
 
       final ex3 = domain.PerformedExercise(
         id: RecordId('ex-5'),
         sessionId: RecordId('session-5'),
         orderIndex: 1,
-        snapshot: const domain.ExerciseSnapshot(name: 'Second'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Second'),
       );
 
       await repo.createSession(session, [ex1, ex2, ex3], []);
@@ -176,7 +176,7 @@ void main() {
         id: RecordId('ex-6'),
         sessionId: RecordId('session-6'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Press'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Press'),
       );
 
       final set1 = domain.PerformedSet(
@@ -250,7 +250,7 @@ void main() {
         id: RecordId('ex-7'),
         sessionId: RecordId('session-8'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Deadlift'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Deadlift'),
       );
 
       await repo.createSession(session, [exercise], []);
@@ -259,7 +259,7 @@ void main() {
         id: RecordId('ex-7'),
         sessionId: RecordId('session-8'),
         orderIndex: 1,
-        snapshot: const domain.ExerciseSnapshot(name: 'Squat'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Squat'),
       );
 
       try {
@@ -314,7 +314,7 @@ void main() {
         id: RecordId('ex-8'),
         sessionId: RecordId('session-10'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Press'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Press'),
       );
 
       final set1 = domain.PerformedSet(
@@ -346,6 +346,7 @@ void main() {
         sessionId: RecordId('session-11'),
         orderIndex: 0,
         snapshot: const domain.ExerciseSnapshot(
+          id: 'barbell_row',
           name: 'Barbell Row',
           equipment: 'Barbell',
           primaryMuscle: 'Back',
@@ -497,7 +498,7 @@ void main() {
         id: RecordId('ex-auto-1'),
         sessionId: RecordId('autosave-1'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Squat'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Squat'),
       );
 
       await repo.addExercise(exercise);
@@ -518,7 +519,7 @@ void main() {
         id: RecordId('ex-auto-2'),
         sessionId: RecordId('autosave-2'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Press'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Press'),
       );
 
       await repo.createSession(session, [exercise], []);
@@ -550,7 +551,7 @@ void main() {
         id: RecordId('ex-rapid-1'),
         sessionId: RecordId('rapid-1'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Curl'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Curl'),
       );
 
       await repo.createSession(session, [exercise], []);
@@ -588,14 +589,14 @@ void main() {
         id: RecordId('ex-edit-1'),
         sessionId: RecordId('edit-1'),
         orderIndex: 0,
-        snapshot: const domain.ExerciseSnapshot(name: 'Original'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'Original'),
       );
 
       final ex2 = domain.PerformedExercise(
         id: RecordId('ex-edit-2'),
         sessionId: RecordId('edit-1'),
         orderIndex: 1,
-        snapshot: const domain.ExerciseSnapshot(name: 'ToDelete'),
+        snapshot: const domain.ExerciseSnapshot(id: 'test_ex', name: 'ToDelete'),
       );
 
       await repo.createSession(session, [ex1, ex2], []);

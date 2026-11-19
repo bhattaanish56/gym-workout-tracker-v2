@@ -12,7 +12,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase.withQueryExecutor(NativeDatabase.memory());
-    analytics = ProgressAnalyticsService(db);
+    analytics = ProgressAnalyticsService(db, 'test_user');
   });
 
   tearDown(() async {
@@ -111,6 +111,7 @@ Future<String> _addWorkout(
       .insert(
         WorkoutSessionsCompanion.insert(
           id: id,
+          userId: const Value('test_user'),
           sourceType: 'manual',
           startedAt: DateTime.now(),
           workoutDate: date,

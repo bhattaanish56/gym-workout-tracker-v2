@@ -59,14 +59,20 @@ class DriftProgressRepository {
 
   Future<List<domain.BodyWeightEntry>> getBodyWeightHistory({
     int limit = 100,
+    DateTime? startDate,
   }) async {
-    final rows =
-        await (_db.select(_db.bodyWeightEntries)
-              ..where((t) => t.userId.equals(userId))
-              ..orderBy([(t) => OrderingTerm.desc(t.measuredAt)])
-              ..limit(limit))
-            .get();
+    final query = _db.select(_db.bodyWeightEntries)
+      ..where((t) => t.userId.equals(userId));
 
+    if (startDate != null) {
+      query.where((t) => t.measuredAt.isBiggerOrEqualValue(startDate));
+    }
+
+    query
+      ..orderBy([(t) => OrderingTerm.desc(t.measuredAt)])
+      ..limit(limit);
+
+    final rows = await query.get();
     return rows.map(_mapToBodyWeightEntry).toList();
   }
 

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../../core/domain/value_objects/identifiers.dart';
+import '../../../sessions/data/database/app_database.dart' hide CustomExercise;
+import '../../../exercises/domain/models/exercise.dart';
+import '../../../exercises/domain/models/custom_exercise.dart';
+import '../../../exercises/presentation/providers/exercise_providers.dart';
 import '../../domain/models/bmi.dart';
+import '../../domain/models/time_range.dart';
 import '../providers/progress_providers.dart';
 import '../widgets/add_bodyweight_dialog.dart';
 
@@ -31,6 +36,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     final bodyWeightHistory = ref.watch(bodyWeightHistoryProvider);
     final latestWeight = ref.watch(latestBodyWeightProvider);
     final userHeight = ref.watch(userHeightProvider);
+    final globalTimeRange = ref.watch(globalTimeRangeProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -72,12 +78,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       ),
                     ),
                     PopupMenuButton<String>(
-                      icon: const Icon(Icons.arrow_drop_down),
-                      onSelected: (value) {},
+                      onSelected: (value) {
+                        final timeRange = TimeRange.values.firstWhere(
+                          (e) => e.name == value,
+                        );
+                        ref.read(globalTimeRangeProvider.notifier).setRange(timeRange);
+                      },
                       itemBuilder: (context) => [
-                        const PopupMenuItem(value: 'month', child: Text('This Month')),
                         const PopupMenuItem(value: 'week', child: Text('This Week')),
-                        const PopupMenuItem(value: 'all', child: Text('All Time')),
+                        const PopupMenuItem(value: 'month', child: Text('This Month')),
+                        const PopupMenuItem(value: 'threeMonths', child: Text('3 Months')),
+                        const PopupMenuItem(value: 'allTime', child: Text('All Time')),
                       ],
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -89,7 +100,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'This Month',
+                              globalTimeRange.label,
                               style: theme.textTheme.bodyMedium,
                             ),
                             const SizedBox(width: 4),
@@ -240,11 +251,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   ),
                 ),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.arrow_drop_down, size: 20),
-                  onSelected: (value) {},
+                  onSelected: (value) {
+                    final timeRange = TimeRange.values.firstWhere(
+                      (e) => e.name == value,
+                    );
+                    ref.read(bodyWeightTimeRangeProvider.notifier).setRange(timeRange);
+                  },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'month', child: Text('This Month')),
                     const PopupMenuItem(value: 'week', child: Text('This Week')),
+                    const PopupMenuItem(value: 'month', child: Text('This Month')),
+                    const PopupMenuItem(value: 'threeMonths', child: Text('3 Months')),
+                    const PopupMenuItem(value: 'allTime', child: Text('All Time')),
                   ],
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -255,7 +272,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('This Month', style: theme.textTheme.bodySmall),
+                        Text(ref.watch(bodyWeightTimeRangeProvider).label, style: theme.textTheme.bodySmall),
                         const SizedBox(width: 2),
                         const Icon(Icons.arrow_drop_down, size: 16),
                       ],
@@ -424,6 +441,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   Widget _buildStrengthProgressSection() {
     final theme = Theme.of(context);
+    final selectedExerciseId = ref.watch(selectedExerciseIdProvider);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -440,30 +459,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.arrow_drop_down, size: 20),
-                  onSelected: (value) {},
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'bench', child: Text('Bench Press')),
-                    const PopupMenuItem(value: 'squat', child: Text('Squat')),
-                    const PopupMenuItem(value: 'deadlift', child: Text('Deadlift')),
-                  ],
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Bench Press', style: theme.textTheme.bodySmall),
-                        const SizedBox(width: 2),
-                        const Icon(Icons.arrow_drop_down, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildExerciseSelector(),
               ],
             ),
             const SizedBox(height: 4),
@@ -473,28 +469,269 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
-            Center(
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.insights_outlined,
-                    size: 32,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Complete more workouts to see progress',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 16),
+            if (selectedExerciseId == null)
+              _buildExerciseSelectorPrompt()
+            else
+              _buildStrengthCharts(selectedExerciseId),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildExerciseSelector() {
+    final theme = Theme.of(context);
+    final selectedExerciseId = ref.watch(selectedExerciseIdProvider);
+    final exercisesAsync = ref.watch(exerciseSearchProvider(ExerciseSearchParams()));
+
+    return exercisesAsync.when(
+      data: (exercises) {
+        String? selectedName;
+        if (selectedExerciseId != null) {
+          final match = exercises
+              .where((e) {
+                final id = e is Exercise ? e.id : (e as CustomExercise).id.value;
+                return id == selectedExerciseId;
+              })
+              .firstOrNull;
+          if (match != null) {
+            selectedName = match is Exercise ? match.canonicalName : (match as CustomExercise).name;
+          }
+        }
+
+        return PopupMenuButton<String>(
+          onSelected: (exerciseId) {
+            ref.read(selectedExerciseIdProvider.notifier).setExercise(exerciseId);
+          },
+          itemBuilder: (context) => exercises.take(20).map((exercise) {
+            final id = exercise is Exercise ? exercise.id : (exercise as CustomExercise).id.value;
+            final name = exercise is Exercise ? exercise.canonicalName : (exercise as CustomExercise).name;
+            return PopupMenuItem(value: id, child: Text(name));
+          }).toList(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  selectedName ?? 'Select Exercise',
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.arrow_drop_down, size: 16),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox(width: 100, height: 24, child: LinearProgressIndicator()),
+      error: (e, st) => const Text('Error'),
+    );
+  }
+
+  Widget _buildExerciseSelectorPrompt() {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          children: [
+            Icon(
+              Icons.insights_outlined,
+              size: 32,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Select an exercise to see progress',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStrengthCharts(String exerciseId) {
+    final progressAsync = ref.watch(exerciseProgressProvider(ExerciseId(exerciseId)));
+
+    return progressAsync.when(
+      data: (data) {
+        final history = data['history'] as List<Map<String, dynamic>>;
+        if (history.isEmpty) {
+          return _buildEmptyStrengthState();
+        }
+
+        final heaviest = data['heaviest'] as int?;
+        final oneRepMax = data['oneRepMax'] as double?;
+
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStrengthStat(
+                    'Heaviest Lift',
+                    heaviest != null ? '${(heaviest / 1000).toStringAsFixed(1)} kg' : '--',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStrengthStat(
+                    'Est. 1RM',
+                    oneRepMax != null ? '${oneRepMax.toStringAsFixed(1)} kg' : '--',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 180,
+              child: _buildStrengthChart(history),
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => Text('Error: $e'),
+    );
+  }
+
+  Widget _buildEmptyStrengthState() {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Text(
+          'No data for this exercise yet',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStrengthStat(String label, String value) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStrengthChart(List<Map<String, dynamic>> history) {
+    final theme = Theme.of(context);
+    final spots = <FlSpot>[];
+
+    // Get last 10 workouts with this exercise
+    final recentHistory = history.take(10).toList().reversed.toList();
+
+    for (int i = 0; i < recentHistory.length; i++) {
+      final set = recentHistory[i]['set'] as PerformedSet;
+      if (set.completed && set.loadGrams != null && set.reps != null && set.reps! > 0) {
+        final weightKg = set.loadGrams! / 1000;
+        spots.add(FlSpot(i.toDouble(), weightKg));
+      }
+    }
+
+    if (spots.isEmpty) {
+      return const Center(child: Text('No completed sets with weight'));
+    }
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: 5,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: theme.colorScheme.outline.withValues(alpha: 0.1),
+              strokeWidth: 1,
+            );
+          },
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  '${value.toInt()}kg',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          bottomTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: theme.colorScheme.primary,
+            barWidth: 3,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4,
+                  color: theme.colorScheme.primary,
+                  strokeWidth: 2,
+                  strokeColor: theme.colorScheme.surface,
+                );
+              },
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            ),
+          ),
+        ],
       ),
     );
   }
