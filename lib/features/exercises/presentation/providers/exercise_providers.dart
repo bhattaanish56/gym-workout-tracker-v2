@@ -7,7 +7,8 @@ import '../../domain/repositories/exercise_repository.dart';
 
 final exerciseRepositoryProvider = Provider<ExerciseRepository>((ref) {
   final db = ref.watch(databaseProvider);
-  return DriftExerciseRepository(db);
+  final userId = ref.watch(currentUserIdProvider);
+  return DriftExerciseRepository(db, userId);
 });
 
 final allExercisesProvider = FutureProvider<List<dynamic>>((ref) async {

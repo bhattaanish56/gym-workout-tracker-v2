@@ -8,12 +8,16 @@ import '../database/app_database.dart';
 import '../../../../core/domain/value_objects/identifiers.dart';
 import '../../../../core/domain/value_objects/date_time.dart';
 import '../../../../core/domain/value_objects/weight.dart';
+import '../../../sync/domain/sync_hooks.dart';
+import '../../../sync/data/firestore_serializer.dart';
 
 /// Drift implementation of WorkoutRepository.
 class DriftWorkoutRepository implements WorkoutRepository {
   final AppDatabase _db;
+  final String userId;
+  final SyncHooks? _syncHooks;
 
-  DriftWorkoutRepository(this._db);
+  DriftWorkoutRepository(this._db, this.userId, [this._syncHooks]);
 
   @override
   Future<void> createSession(
@@ -27,6 +31,7 @@ class DriftWorkoutRepository implements WorkoutRepository {
           .insert(
             WorkoutSessionsCompanion.insert(
               id: session.id.value,
+              userId: Value(userId),
               sourceType: session.sourceType.toJson(),
               startedAt: session.startedAt,
               finishedAt: Value(session.finishedAt),
@@ -76,13 +81,19 @@ class DriftWorkoutRepository implements WorkoutRepository {
             );
       }
     });
+
+    // Enqueue sync operation after successful local write
+    if (_syncHooks != null) {
+      final data = FirestoreSerializer.serializeWorkout(session, exercises, sets);
+      await _syncHooks.onWorkoutCreated(session.id.value, data);
+    }
   }
 
   @override
   Future<void> updateSession(domain.WorkoutSession session) async {
     await (_db.update(
       _db.workoutSessions,
-    )..where((t) => t.id.equals(session.id.value))).write(
+    )..where((t) => t.id.equals(session.id.value) & t.userId.equals(userId))).write(
       WorkoutSessionsCompanion(
         sourceType: Value(session.sourceType.toJson()),
         startedAt: Value(session.startedAt),
@@ -100,13 +111,26 @@ class DriftWorkoutRepository implements WorkoutRepository {
         updatedAt: Value(session.updatedAt),
       ),
     );
+
+    // Enqueue sync operation after successful update
+    if (_syncHooks != null) {
+      // Fetch related data for full sync
+      final exercises = await getSessionExercises(session.id.value);
+      final allSets = <domain.PerformedSet>[];
+      for (final exercise in exercises) {
+        final sets = await getExerciseSets(exercise.id.value);
+        allSets.addAll(sets);
+      }
+      final data = FirestoreSerializer.serializeWorkout(session, exercises, allSets);
+      await _syncHooks.onWorkoutUpdated(session.id.value, data);
+    }
   }
 
   @override
   Future<domain.WorkoutSession?> getSession(String sessionId) async {
     final row = await (_db.select(
       _db.workoutSessions,
-    )..where((t) => t.id.equals(sessionId))).getSingleOrNull();
+    )..where((t) => t.id.equals(sessionId) & t.userId.equals(userId))).getSingleOrNull();
 
     if (row == null) return null;
     return _sessionFromRow(row);
@@ -116,7 +140,8 @@ class DriftWorkoutRepository implements WorkoutRepository {
   Future<List<domain.WorkoutSession>> getAllSessions() async {
     final rows = await (_db.select(
       _db.workoutSessions,
-    )..orderBy([(t) => OrderingTerm.desc(t.startedAt)])).get();
+    )..where((t) => t.userId.equals(userId))
+      ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])).get();
 
     return rows.map(_sessionFromRow).toList();
   }
@@ -225,7 +250,7 @@ class DriftWorkoutRepository implements WorkoutRepository {
   Future<void> completeSession(String sessionId, DateTime finishedAt) async {
     await (_db.update(
       _db.workoutSessions,
-    )..where((t) => t.id.equals(sessionId))).write(
+    )..where((t) => t.id.equals(sessionId) & t.userId.equals(userId))).write(
       WorkoutSessionsCompanion(
         finishedAt: Value(finishedAt.toUtc()),
         status: Value(domain.WorkoutStatus.completed.toJson()),
@@ -240,7 +265,8 @@ class DriftWorkoutRepository implements WorkoutRepository {
         await (_db.select(_db.workoutSessions)
               ..where(
                 (t) =>
-                    t.status.equals(domain.WorkoutStatus.inProgress.toJson()),
+                    t.status.equals(domain.WorkoutStatus.inProgress.toJson()) &
+                    t.userId.equals(userId),
               )
               ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
               ..limit(1))
@@ -254,7 +280,7 @@ class DriftWorkoutRepository implements WorkoutRepository {
   Future<void> discardSession(String sessionId) async {
     await (_db.update(
       _db.workoutSessions,
-    )..where((t) => t.id.equals(sessionId))).write(
+    )..where((t) => t.id.equals(sessionId) & t.userId.equals(userId))).write(
       WorkoutSessionsCompanion(
         status: Value(domain.WorkoutStatus.abandoned.toJson()),
         updatedAt: Value(DateTime.now().toUtc()),

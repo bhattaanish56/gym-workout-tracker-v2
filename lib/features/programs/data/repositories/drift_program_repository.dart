@@ -7,12 +7,16 @@ import '../../domain/models/planned_exercise.dart' as domain;
 import '../../domain/models/rotation_state.dart' as domain;
 import '../../domain/models/weekday_assignment.dart' as domain;
 import '../../domain/repositories/program_repository.dart';
+import '../../../sync/domain/sync_hooks.dart';
+import '../../../sync/data/firestore_serializer.dart';
 
 /// Drift implementation of program repository.
 class DriftProgramRepository implements ProgramRepository {
   final AppDatabase _db;
+  final String userId;
+  final SyncHooks? _syncHooks;
 
-  DriftProgramRepository(this._db);
+  DriftProgramRepository(this._db, this.userId, [this._syncHooks]);
 
   @override
   Future<domain.Program> createProgram(domain.Program program) async {
@@ -21,6 +25,7 @@ class DriftProgramRepository implements ProgramRepository {
         .insert(
           ProgramsCompanion(
             id: Value(program.id.value),
+            userId: Value(userId),
             name: Value(program.name),
             description: Value(program.description),
             scheduleMode: Value(program.scheduleMode.toJson()),
@@ -29,6 +34,18 @@ class DriftProgramRepository implements ProgramRepository {
             updatedAt: Value(program.updatedAt),
           ),
         );
+
+    // Enqueue sync operation after successful create
+    if (_syncHooks != null) {
+      final days = await getProgramDays(program.id);
+      final exercisesByDay = <String, List<domain.PlannedExercise>>{};
+      for (final day in days) {
+        exercisesByDay[day.id.value] = await getPlannedExercises(day.id);
+      }
+      final data = FirestoreSerializer.serializeProgram(program, days, exercisesByDay);
+      await _syncHooks.onProgramCreated(program.id.value, data);
+    }
+
     return program;
   }
 
@@ -36,7 +53,7 @@ class DriftProgramRepository implements ProgramRepository {
   Future<domain.Program> updateProgram(domain.Program program) async {
     await (_db.update(
       _db.programs,
-    )..where((t) => t.id.equals(program.id.value))).write(
+    )..where((t) => t.id.equals(program.id.value) & t.userId.equals(userId))).write(
       ProgramsCompanion(
         name: Value(program.name),
         description: Value(program.description),
@@ -45,6 +62,18 @@ class DriftProgramRepository implements ProgramRepository {
         updatedAt: Value(program.updatedAt),
       ),
     );
+
+    // Enqueue sync operation after successful update
+    if (_syncHooks != null) {
+      final days = await getProgramDays(program.id);
+      final exercisesByDay = <String, List<domain.PlannedExercise>>{};
+      for (final day in days) {
+        exercisesByDay[day.id.value] = await getPlannedExercises(day.id);
+      }
+      final data = FirestoreSerializer.serializeProgram(program, days, exercisesByDay);
+      await _syncHooks.onProgramUpdated(program.id.value, data);
+    }
+
     return program;
   }
 
@@ -52,12 +81,14 @@ class DriftProgramRepository implements ProgramRepository {
   Future<void> deleteProgram(RecordId programId) async {
     await (_db.delete(
       _db.programs,
-    )..where((t) => t.id.equals(programId.value))).go();
+    )..where((t) => t.id.equals(programId.value) & t.userId.equals(userId))).go();
   }
 
   @override
   Future<List<domain.Program>> getPrograms() async {
-    final rows = await _db.select(_db.programs).get();
+    final rows = await (_db.select(_db.programs)
+          ..where((t) => t.userId.equals(userId)))
+        .get();
     return rows.map(_programFromRow).toList();
   }
 
@@ -65,7 +96,7 @@ class DriftProgramRepository implements ProgramRepository {
   Future<domain.Program?> getProgramById(RecordId programId) async {
     final row = await (_db.select(
       _db.programs,
-    )..where((t) => t.id.equals(programId.value))).getSingleOrNull();
+    )..where((t) => t.id.equals(programId.value) & t.userId.equals(userId))).getSingleOrNull();
     return row != null ? _programFromRow(row) : null;
   }
 
@@ -73,7 +104,8 @@ class DriftProgramRepository implements ProgramRepository {
   Future<domain.Program?> getActiveProgram() async {
     final row =
         await (_db.select(_db.programs)..where(
-              (t) => t.status.equals(domain.ProgramStatus.active.toJson()),
+              (t) => t.status.equals(domain.ProgramStatus.active.toJson()) &
+                     t.userId.equals(userId),
             ))
             .getSingleOrNull();
     return row != null ? _programFromRow(row) : null;
@@ -82,9 +114,10 @@ class DriftProgramRepository implements ProgramRepository {
   @override
   Future<void> activateProgram(RecordId programId) async {
     await _db.transaction(() async {
-      // Deactivate all programs
+      // Deactivate all programs for this user
       await (_db.update(_db.programs)..where(
-            (t) => t.status.equals(domain.ProgramStatus.active.toJson()),
+            (t) => t.status.equals(domain.ProgramStatus.active.toJson()) &
+                   t.userId.equals(userId),
           ))
           .write(
             ProgramsCompanion(
@@ -93,10 +126,10 @@ class DriftProgramRepository implements ProgramRepository {
             ),
           );
 
-      // Activate target program
+      // Activate target program (verify ownership)
       await (_db.update(
         _db.programs,
-      )..where((t) => t.id.equals(programId.value))).write(
+      )..where((t) => t.id.equals(programId.value) & t.userId.equals(userId))).write(
         ProgramsCompanion(
           status: Value(domain.ProgramStatus.active.toJson()),
           updatedAt: Value(DateTime.now().toUtc()),

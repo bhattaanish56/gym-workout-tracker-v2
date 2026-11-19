@@ -18,7 +18,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase.withQueryExecutor(NativeDatabase.memory());
-    repo = DriftWorkoutRepository(db);
+    repo = DriftWorkoutRepository(db, 'test-user');
   });
 
   tearDown(() async {
@@ -229,7 +229,7 @@ void main() {
       await db.close();
 
       final db2 = AppDatabase.withQueryExecutor(NativeDatabase.memory());
-      final repo2 = DriftWorkoutRepository(db2);
+      final repo2 = DriftWorkoutRepository(db2, 'test-user');
 
       final retrieved = await repo2.getSession('session-7');
       expect(retrieved, isNull);

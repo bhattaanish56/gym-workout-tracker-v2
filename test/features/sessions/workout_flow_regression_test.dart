@@ -12,7 +12,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase.withQueryExecutor(NativeDatabase.memory());
-    repo = DriftWorkoutRepository(db);
+    repo = DriftWorkoutRepository(db, 'test-user');
   });
 
   tearDown(() async {
@@ -20,9 +20,9 @@ void main() {
   });
 
   group('WORKOUT-FLOW-002: Date Separation & Migration', () {
-    test('v7 schema adds fulfilledScheduledDate column', () async {
-      // Verify schema version
-      expect(db.schemaVersion, 7);
+    test('v9 schema supports userId and sync operations', () async {
+      // Verify schema version (v7->v8 added userId, v8->v9 added sync queue)
+      expect(db.schemaVersion, 9);
 
       // Create session with new field
       final session = domain.WorkoutSession.createFreestyle(

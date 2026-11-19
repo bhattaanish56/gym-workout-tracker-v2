@@ -5,12 +5,13 @@ import '../../../sessions/data/database/app_database.dart';
 
 class ProgressAnalyticsService {
   final AppDatabase _db;
+  final String userId;
 
-  ProgressAnalyticsService(this._db);
+  ProgressAnalyticsService(this._db, this.userId);
 
   Future<int> getTotalCompletedWorkouts() async {
     return await (_db.workoutSessions.count(
-      where: (t) => t.status.equals('completed'),
+      where: (t) => t.status.equals('completed') & t.userId.equals(userId),
     )).getSingle();
   }
 
@@ -22,35 +23,61 @@ class ProgressAnalyticsService {
     return await (_db.workoutSessions.count(
       where: (t) =>
           t.status.equals('completed') &
-          t.workoutDate.isBiggerOrEqualValue(startDate),
+          t.workoutDate.isBiggerOrEqualValue(startDate) &
+          t.userId.equals(userId),
     )).getSingle();
   }
 
   Future<int> getTotalCompletedSets() async {
-    return await (_db.performedSets.count(
-      where: (t) => t.completed.equals(true),
-    )).getSingle();
+    final result = await (_db.selectOnly(_db.performedSets)
+          ..addColumns([_db.performedSets.id.count()])
+          ..join([
+            innerJoin(
+              _db.performedExercises,
+              _db.performedExercises.id.equalsExp(_db.performedSets.performedExerciseId),
+            ),
+            innerJoin(
+              _db.workoutSessions,
+              _db.workoutSessions.id.equalsExp(_db.performedExercises.sessionId),
+            ),
+          ])
+          ..where(_db.performedSets.completed.equals(true) & _db.workoutSessions.userId.equals(userId)))
+        .getSingle();
+    return result.read(_db.performedSets.id.count()) ?? 0;
   }
 
   Future<int> getTotalVolume() async {
-    final sets =
-        await (_db.select(_db.performedSets)..where(
-              (t) =>
-                  t.completed.equals(true) &
-                  t.loadGrams.isNotNull() &
-                  t.reps.isNotNull(),
-            ))
-            .get();
+    final query = _db.select(_db.performedSets).join([
+      innerJoin(
+        _db.performedExercises,
+        _db.performedExercises.id.equalsExp(_db.performedSets.performedExerciseId),
+      ),
+      innerJoin(
+        _db.workoutSessions,
+        _db.workoutSessions.id.equalsExp(_db.performedExercises.sessionId),
+      ),
+    ])
+      ..where(
+        _db.performedSets.completed.equals(true) &
+            _db.performedSets.loadGrams.isNotNull() &
+            _db.performedSets.reps.isNotNull() &
+            _db.workoutSessions.userId.equals(userId),
+      );
 
-    return sets.fold<int>(0, (sum, set) {
-      return sum + (set.loadGrams! * set.reps!);
-    });
+    final results = await query.get();
+
+    int totalVolume = 0;
+    for (final row in results) {
+      final set = row.readTable(_db.performedSets);
+      totalVolume += (set.loadGrams! * set.reps!);
+    }
+    return totalVolume;
   }
 
   Future<int> getCurrentStreak() async {
     final sessions =
         await (_db.select(_db.workoutSessions)
-              ..where((t) => t.status.equals('completed'))
+              ..where((t) => t.status.equals('completed') & t.userId.equals(userId))
               ..orderBy([(t) => OrderingTerm.desc(t.workoutDate)]))
             .get();
 
@@ -91,7 +118,7 @@ class ProgressAnalyticsService {
   Future<int> getLongestStreak() async {
     final sessions =
         await (_db.select(_db.workoutSessions)
-              ..where((t) => t.status.equals('completed'))
+              ..where((t) => t.status.equals('completed') & t.userId.equals(userId))
               ..orderBy([(t) => OrderingTerm.asc(t.workoutDate)]))
             .get();
 
@@ -144,7 +171,8 @@ class ProgressAnalyticsService {
               ),
             ),
           ])
-          ..where(_db.workoutSessions.status.equals('completed'))
+          ..where(_db.workoutSessions.status.equals('completed') &
+                  _db.workoutSessions.userId.equals(userId))
           ..orderBy([OrderingTerm.desc(_db.workoutSessions.workoutDate)]);
 
     final results = await query.get();

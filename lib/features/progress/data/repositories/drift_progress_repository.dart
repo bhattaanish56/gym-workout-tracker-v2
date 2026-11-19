@@ -6,8 +6,9 @@ import '../../domain/models/bodyweight_entry.dart' as domain;
 
 class DriftProgressRepository {
   final AppDatabase _db;
+  final String userId;
 
-  DriftProgressRepository(this._db);
+  DriftProgressRepository(this._db, this.userId);
 
   Future<void> addBodyWeight({
     required RecordId id,
@@ -21,6 +22,7 @@ class DriftProgressRepository {
         .insert(
           BodyWeightEntriesCompanion.insert(
             id: id.value,
+            userId: Value(userId),
             weightGrams: weightGrams,
             measuredAt: measuredAt,
             measuredDate: measuredDate.toIso8601(),
@@ -39,7 +41,7 @@ class DriftProgressRepository {
   }) async {
     await (_db.update(
       _db.bodyWeightEntries,
-    )..where((t) => t.id.equals(id.value))).write(
+    )..where((t) => t.id.equals(id.value) & t.userId.equals(userId))).write(
       BodyWeightEntriesCompanion(
         weightGrams: Value(weightGrams),
         measuredAt: Value(measuredAt),
@@ -52,7 +54,7 @@ class DriftProgressRepository {
   Future<void> deleteBodyWeight(RecordId id) async {
     await (_db.delete(
       _db.bodyWeightEntries,
-    )..where((t) => t.id.equals(id.value))).go();
+    )..where((t) => t.id.equals(id.value) & t.userId.equals(userId))).go();
   }
 
   Future<List<domain.BodyWeightEntry>> getBodyWeightHistory({
@@ -60,6 +62,7 @@ class DriftProgressRepository {
   }) async {
     final rows =
         await (_db.select(_db.bodyWeightEntries)
+              ..where((t) => t.userId.equals(userId))
               ..orderBy([(t) => OrderingTerm.desc(t.measuredAt)])
               ..limit(limit))
             .get();
@@ -70,6 +73,7 @@ class DriftProgressRepository {
   Future<domain.BodyWeightEntry?> getLatestBodyWeight() async {
     final row =
         await (_db.select(_db.bodyWeightEntries)
+              ..where((t) => t.userId.equals(userId))
               ..orderBy([(t) => OrderingTerm.desc(t.measuredAt)])
               ..limit(1))
             .getSingleOrNull();
@@ -77,20 +81,23 @@ class DriftProgressRepository {
     return row == null ? null : _mapToBodyWeightEntry(row);
   }
 
-  Future<void> setHeight(int heightCm) async {
-    final exists = await _db.userProfile.count().getSingle() > 0;
-    if (exists) {
-      await _db.userProfile.update().write(
+  Future<void> setHeight(int heightCm, String userIdParam) async {
+    final exists = await (_db.select(_db.userProfile)
+          ..where((t) => t.userId.equals(userIdParam)))
+        .getSingleOrNull();
+    if (exists != null) {
+      await (_db.update(_db.userProfile)
+            ..where((t) => t.userId.equals(userIdParam)))
+          .write(
         UserProfileCompanion(
           heightCm: Value(heightCm),
           updatedAt: Value(DateTime.now().toUtc()),
         ),
       );
     } else {
-      await _db
-          .into(_db.userProfile)
-          .insert(
+      await _db.into(_db.userProfile).insert(
             UserProfileCompanion.insert(
+              userId: userIdParam,
               heightCm: Value(heightCm),
               updatedAt: DateTime.now().toUtc(),
             ),
@@ -98,8 +105,10 @@ class DriftProgressRepository {
     }
   }
 
-  Future<int?> getHeight() async {
-    final row = await _db.userProfile.select().getSingleOrNull();
+  Future<int?> getHeight(String userIdParam) async {
+    final row = await (_db.select(_db.userProfile)
+          ..where((t) => t.userId.equals(userIdParam)))
+        .getSingleOrNull();
     return row?.heightCm;
   }
 

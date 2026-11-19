@@ -6,6 +6,7 @@ part 'app_database.g.dart';
 /// Workout sessions table.
 class WorkoutSessions extends Table {
   TextColumn get id => text()();
+  TextColumn get userId => text().nullable()(); // Owner of this record
   TextColumn get sourceType => text()();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get finishedAt => dateTime().nullable()();
@@ -54,6 +55,7 @@ class PerformedSets extends Table {
 /// Custom exercises table.
 class CustomExercises extends Table {
   TextColumn get id => text()();
+  TextColumn get userId => text().nullable()(); // Owner of this record
   TextColumn get name => text()();
   TextColumn get equipment => text()();
   TextColumn get primaryMuscle => text()();
@@ -67,6 +69,7 @@ class CustomExercises extends Table {
 /// Programs table.
 class Programs extends Table {
   TextColumn get id => text()();
+  TextColumn get userId => text().nullable()(); // Owner of this record
   TextColumn get name => text()();
   TextColumn get description => text().nullable()();
   TextColumn get scheduleMode => text()();
@@ -145,6 +148,7 @@ class WeekdayAssignments extends Table {
 /// Body weight entries table.
 class BodyWeightEntries extends Table {
   TextColumn get id => text()();
+  TextColumn get userId => text().nullable()(); // Owner of this record
   IntColumn get weightGrams => integer()();
   DateTimeColumn get measuredAt => dateTime()();
   TextColumn get measuredDate => text()();
@@ -157,8 +161,30 @@ class BodyWeightEntries extends Table {
 
 /// User profile table.
 class UserProfile extends Table {
+  TextColumn get userId => text()(); // Profile belongs to this user
   IntColumn get heightCm => integer().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {userId};
+}
+
+/// Sync operations queue.
+class SyncOperations extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()(); // Owner of this sync operation
+  TextColumn get collection => text()();
+  TextColumn get recordId => text()();
+  TextColumn get operationType => text()();
+  TextColumn get data => text().nullable()(); // JSON-encoded data
+  TextColumn get status => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get attemptedAt => dateTime().nullable()();
+  IntColumn get retryCount => integer()();
+  TextColumn get error => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 @DriftDatabase(
@@ -174,6 +200,7 @@ class UserProfile extends Table {
     WeekdayAssignments,
     BodyWeightEntries,
     UserProfile,
+    SyncOperations,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -181,7 +208,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withQueryExecutor(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration {
@@ -224,6 +251,26 @@ class AppDatabase extends _$AppDatabase {
               rethrow;
             }
           }
+        }
+        // v7 -> v8: Add userId columns for multi-user support
+        if (from <= 7 && to >= 8) {
+          try {
+            await m.addColumn(workoutSessions, workoutSessions.userId);
+            await m.addColumn(programs, programs.userId);
+            await m.addColumn(customExercises, customExercises.userId);
+            await m.addColumn(bodyWeightEntries, bodyWeightEntries.userId);
+            // UserProfile: recreate with userId as primary key
+            await m.deleteTable('user_profile');
+            await m.createTable(userProfile);
+          } catch (e) {
+            if (!e.toString().contains('duplicate column')) {
+              rethrow;
+            }
+          }
+        }
+        // v8 -> v9: Add sync operations queue
+        if (from <= 8 && to >= 9) {
+          await m.createTable(syncOperations);
         }
       },
       beforeOpen: (details) async {

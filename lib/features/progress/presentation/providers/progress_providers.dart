@@ -1,18 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/value_objects/identifiers.dart';
 import '../../../sessions/presentation/providers/workout_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/repositories/drift_progress_repository.dart';
 import '../../domain/services/progress_analytics_service.dart';
 import '../../domain/models/bodyweight_entry.dart';
 
 final progressRepositoryProvider = Provider<DriftProgressRepository>((ref) {
   final db = ref.watch(databaseProvider);
-  return DriftProgressRepository(db);
+  final userId = ref.watch(currentUserIdProvider);
+  return DriftProgressRepository(db, userId);
 });
 
 final progressAnalyticsProvider = Provider<ProgressAnalyticsService>((ref) {
   final db = ref.watch(databaseProvider);
-  return ProgressAnalyticsService(db);
+  final userId = ref.watch(currentUserIdProvider);
+  return ProgressAnalyticsService(db, userId);
 });
 
 final bodyWeightHistoryProvider = FutureProvider<List<BodyWeightEntry>>((
@@ -29,7 +32,9 @@ final latestBodyWeightProvider = FutureProvider<BodyWeightEntry?>((ref) async {
 
 final userHeightProvider = FutureProvider<int?>((ref) async {
   final repo = ref.watch(progressRepositoryProvider);
-  return repo.getHeight();
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return null;
+  return repo.getHeight(user.uid);
 });
 
 final workoutStatsProvider = FutureProvider<Map<String, int>>((ref) async {

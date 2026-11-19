@@ -62,15 +62,17 @@ void main() {
     });
 
     test('sets and gets height', () async {
-      await repo.setHeight(175);
-      final height = await repo.getHeight();
+      const userId = 'test-user';
+      await repo.setHeight(175, userId);
+      final height = await repo.getHeight(userId);
       expect(height, 175);
     });
 
     test('updates height', () async {
-      await repo.setHeight(175);
-      await repo.setHeight(180);
-      final height = await repo.getHeight();
+      const userId = 'test-user';
+      await repo.setHeight(175, userId);
+      await repo.setHeight(180, userId);
+      final height = await repo.getHeight(userId);
       expect(height, 180);
     });
 

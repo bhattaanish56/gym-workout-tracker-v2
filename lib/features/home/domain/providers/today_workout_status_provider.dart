@@ -10,7 +10,8 @@ import '../../../programs/domain/models/program_day.dart';
 final todayWorkoutStatusProvider = FutureProvider<TodayWorkoutStatus>((ref) async {
   final workoutRepo = ref.watch(workoutRepositoryProvider);
   final db = ref.watch(databaseProvider);
-  final programRepo = DriftProgramRepository(db);
+  final userId = ref.watch(currentUserIdProvider);
+  final programRepo = DriftProgramRepository(db, userId);
 
   // Check for active session
   final activeSession = await workoutRepo.getActiveSession();

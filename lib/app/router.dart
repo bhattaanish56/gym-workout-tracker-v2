@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,12 +16,57 @@ import '../features/programs/presentation/screens/program_day_editor_screen.dart
 import '../features/programs/presentation/screens/program_builder_screen.dart';
 import '../features/progress/presentation/screens/progress_screen.dart';
 import '../features/nutrition/presentation/screens/nutrition_screen.dart';
+import '../features/auth/presentation/screens/welcome_screen.dart';
+import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../features/auth/presentation/screens/profile_screen.dart';
+import '../features/auth/presentation/providers/auth_providers.dart';
 import '../shared/widgets/section_page.dart';
 
-GoRouter createAppRouter({String initialLocation = '/home'}) {
+GoRouter createAppRouter(Ref ref) {
   return GoRouter(
-    initialLocation: initialLocation,
+    initialLocation: '/home',
+    redirect: (context, state) {
+      final user = ref.read(authRepositoryProvider).currentUser;
+      final isAuthenticated = user != null;
+      final isAuthRoute = state.matchedLocation.startsWith('/welcome') ||
+          state.matchedLocation.startsWith('/login') ||
+          state.matchedLocation.startsWith('/register') ||
+          state.matchedLocation.startsWith('/forgot-password');
+
+      if (!isAuthenticated && !isAuthRoute) {
+        return '/welcome';
+      }
+      if (isAuthenticated && isAuthRoute) {
+        return '/home';
+      }
+      return null;
+    },
+    refreshListenable: GoRouterRefreshStream(
+      ref.watch(authRepositoryProvider).authStateChanges,
+    ),
     routes: [
+      GoRoute(
+        path: '/welcome',
+        builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
       GoRoute(path: '/', redirect: (context, state) => '/home'),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -177,7 +224,24 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final router = createAppRouter();
+  final router = createAppRouter(ref);
   ref.onDispose(router.dispose);
   return router;
 });
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+          (dynamic _) => notifyListeners(),
+        );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

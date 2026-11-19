@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isNotGuest() {
+      return isAuthenticated() && !request.auth.token.firebase.sign_in_provider.matches('anonymous');
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isNotGuest();
+    }
+
+    // Workouts (authenticated users only, no guest uploads)
+    match /users/{userId}/workouts/{workoutId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isNotGuest()
+                    && request.resource.data.id == workoutId;
+      allow update: if isOwner(userId) && isNotGuest()
+                    && resource.data.id == workoutId;
+      allow delete: if isOwner(userId) && isNotGuest();
+    }
+
+    // Programs (authenticated users only, no guest uploads)
+    match /users/{userId}/programs/{programId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isNotGuest()
+                    && request.resource.data.id == programId;
+      allow update: if isOwner(userId) && isNotGuest()
+                    && resource.data.id == programId;
+      allow delete: if isOwner(userId) && isNotGuest();
+    }
+
+    // Custom exercises (authenticated users only, no guest uploads)
+    match /users/{userId}/custom_exercises/{exerciseId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isNotGuest()
+                    && request.resource.data.id == exerciseId;
+      allow update: if isOwner(userId) && isNotGuest()
+                    && resource.data.id == exerciseId;
+      allow delete: if isOwner(userId) && isNotGuest();
+    }
+
+    // Bodyweight entries (authenticated users only, no guest uploads)
+    match /users/{userId}/bodyweight/{entryId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isNotGuest()
+                    && request.resource.data.id == entryId;
+      allow update: if isOwner(userId) && isNotGuest()
+                    && resource.data.id == entryId;
+      allow delete: if isOwner(userId) && isNotGuest();
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

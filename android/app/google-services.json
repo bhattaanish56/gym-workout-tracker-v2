@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1094133735709",
+    "project_id": "gym-workout-tracker-6ae9a",
+    "storage_bucket": "gym-workout-tracker-6ae9a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094133735709:android:fceb47ad64fd370d2201f4",
+        "android_client_info": {
+          "package_name": "com.gymworkouttracker.v2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1094133735709-3860uvcd5sfncgu0omrhn424q65qb2d6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gymworkouttracker.v2",
+            "certificate_hash": "77ba5544b8a93fbf1a9647211ce24e8f9b53126b"
+          }
+        },
+        {
+          "client_id": "1094133735709-srhct94tat80dfs7c0rjkfaki63mfvh4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGcMX64j1wI1qBKlWGCK6HlBaQfNP6eTM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1094133735709-srhct94tat80dfs7c0rjkfaki63mfvh4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1094133735709-e92npc44u6otdp2eruj92qs0jvaf2pfc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gymworkouttracker.gymWorkoutTrackerV2"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

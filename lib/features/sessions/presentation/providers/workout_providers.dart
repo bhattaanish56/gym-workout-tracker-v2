@@ -15,6 +15,9 @@ import '../../../programs/domain/models/program.dart' as domain;
 import '../../../programs/domain/models/rotation_state.dart' as domain;
 import '../../../exercises/domain/repositories/exercise_repository.dart';
 import '../../../exercises/data/repositories/drift_exercise_repository.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../sync/domain/sync_hooks.dart';
+import '../../../sync/presentation/providers/sync_providers.dart';
 
 // UUID generator
 const _uuid = Uuid();
@@ -24,10 +27,24 @@ final databaseProvider = Provider<db.AppDatabase>((ref) {
   return db.AppDatabase();
 });
 
+/// Current user ID provider (with fallback for offline/pre-auth usage)
+final currentUserIdProvider = Provider<String>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return user?.uid ?? 'local_user';
+});
+
+/// Sync hooks provider
+final syncHooksProvider = Provider<SyncHooks?>((ref) {
+  final coordinator = ref.watch(syncCoordinatorProvider);
+  return coordinator != null ? SyncHooks(coordinator) : null;
+});
+
 /// Workout repository provider
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
   final database = ref.watch(databaseProvider);
-  return DriftWorkoutRepository(database);
+  final userId = ref.watch(currentUserIdProvider);
+  final syncHooks = ref.watch(syncHooksProvider);
+  return DriftWorkoutRepository(database, userId, syncHooks);
 });
 
 /// Active workout state
@@ -75,8 +92,9 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkoutState> {
   ActiveWorkoutState build() {
     _repository = ref.watch(workoutRepositoryProvider);
     final db = ref.watch(databaseProvider);
-    _programRepository = DriftProgramRepository(db);
-    _exerciseRepository = DriftExerciseRepository(db);
+    final userId = ref.watch(currentUserIdProvider);
+    _programRepository = DriftProgramRepository(db, userId);
+    _exerciseRepository = DriftExerciseRepository(db, userId);
     _loadActiveSession();
     return const ActiveWorkoutState();
   }

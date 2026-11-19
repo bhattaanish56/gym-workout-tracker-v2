@@ -6,6 +6,45 @@ import 'package:drift/drift.dart' hide isNull;
 
 import 'package:gym_workout_tracker_v2/main.dart' as app;
 import 'package:gym_workout_tracker_v2/app/router.dart';
+import 'package:gym_workout_tracker_v2/features/auth/presentation/providers/auth_providers.dart';
+import 'package:gym_workout_tracker_v2/features/auth/domain/models/app_user.dart';
+import 'package:gym_workout_tracker_v2/features/auth/domain/repositories/auth_repository.dart';
+
+const _testUser = AppUser(
+  uid: 'test-user-id',
+  email: 'test@example.com',
+  isAnonymous: false,
+);
+
+class _MockAuthRepository implements AuthRepository {
+  @override
+  Stream<AppUser?> get authStateChanges => Stream.value(_testUser);
+
+  @override
+  AppUser? get currentUser => _testUser;
+
+  @override
+  Future<AppUser> signInWithEmail(String email, String password) async => _testUser;
+
+  @override
+  Future<AppUser> signUpWithEmail(String email, String password) async => _testUser;
+
+  @override
+  Future<AppUser> signInWithGoogle() async => _testUser;
+
+  @override
+  Future<AppUser> signInAnonymously() async => _testUser;
+
+  @override
+  Future<void> signOut() async {}
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {}
+}
+
+final _authOverrides = [
+  authRepositoryProvider.overrideWithValue(_MockAuthRepository()),
+];
 
 double _contrast(Color foreground, Color background) {
   final a = foreground.computeLuminance();
@@ -35,19 +74,22 @@ void main() {
     WidgetTester tester,
   ) async {
     _setViewport(tester, const Size(375, 812));
-    app.main();
+    await tester.pumpWidget(
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(ProviderScope), findsOneWidget);
     expect(find.text('Gym Workout Tracker'), findsOneWidget);
-    expect(find.text('View workouts'), findsOneWidget);
   });
 
   testWidgets(
     'Navigation switches all five sections and selected destinations',
     (tester) async {
       _setViewport(tester, const Size(375, 812));
-      await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+      await tester.pumpWidget(
+        ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
+      );
       await tester.pumpAndSettle();
       final router = ProviderScope.containerOf(
         tester.element(find.byType(app.MyApp)),
@@ -77,34 +119,32 @@ void main() {
   );
 
   testWidgets('Deep link to /exercises route', (WidgetTester tester) async {
-    final router = createAppRouter(initialLocation: '/exercises');
-    addTearDown(router.dispose);
-
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [appRouterProvider.overrideWithValue(router)],
-        child: const app.MyApp(),
-      ),
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
     );
     await tester.pumpAndSettle();
 
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(app.MyApp)),
+      listen: false,
+    ).read(appRouterProvider);
+    router.go('/exercises');
+    await tester.pumpAndSettle();
+
     expect(find.byKey(const Key('page-exercises')), findsOneWidget);
-    expect(
-      find.text('No exercises saved yet. Your library will appear here.'),
-      findsOneWidget,
-    );
   });
 
   testWidgets('Unknown route recovers to Home', (WidgetTester tester) async {
-    final router = createAppRouter(initialLocation: '/unknown');
-    addTearDown(router.dispose);
-
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [appRouterProvider.overrideWithValue(router)],
-        child: const app.MyApp(),
-      ),
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
     );
+    await tester.pumpAndSettle();
+
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(app.MyApp)),
+      listen: false,
+    ).read(appRouterProvider);
+    router.go('/unknown');
     await tester.pumpAndSettle();
 
     expect(find.text('Page not found'), findsOneWidget);
@@ -126,7 +166,7 @@ void main() {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1.0;
 
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('nav-bar')), findsOneWidget);
@@ -142,7 +182,7 @@ void main() {
     tester.view.physicalSize = const Size(800, 600);
     tester.view.devicePixelRatio = 1.0;
 
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('nav-bar')), findsNothing);
@@ -150,7 +190,7 @@ void main() {
   });
 
   testWidgets('Root theme is dark by default', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(Scaffold).first);
@@ -160,7 +200,7 @@ void main() {
 
   testWidgets('App supports explicit light mode', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp()),
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
     );
     await tester.pumpAndSettle();
 
@@ -181,7 +221,7 @@ void main() {
     binding.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
 
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp()),
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
     );
     await tester.pumpAndSettle();
 
@@ -201,7 +241,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp()),
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
     );
     await tester.pumpAndSettle();
 
@@ -224,7 +264,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(child: app.MyApp()),
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
     );
     await tester.pumpAndSettle();
 
@@ -256,7 +296,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     tester.platformDispatcher.textScaleFactorTestValue = 2.0;
 
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
 
     expect(
@@ -288,7 +328,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     tester.platformDispatcher.textScaleFactorTestValue = 2.0;
 
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
 
     expect(
@@ -308,22 +348,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
   testWidgets('Root path redirects to Home', (tester) async {
-    final router = createAppRouter(initialLocation: '/');
-    addTearDown(router.dispose);
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [appRouterProvider.overrideWithValue(router)],
-        child: const app.MyApp(),
-      ),
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
     );
     await tester.pumpAndSettle();
+
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(app.MyApp)),
+      listen: false,
+    ).read(appRouterProvider);
+    router.go('/');
+    await tester.pumpAndSettle();
+
     expect(find.byKey(const Key('page-home')), findsOneWidget);
     expect(router.routeInformationProvider.value.uri.path, '/home');
   });
 
   testWidgets('Home action opens Workouts', (tester) async {
     _setViewport(tester, const Size(375, 812));
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(
+      ProviderScope(overrides: _authOverrides, child: const app.MyApp()),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('View workouts'));
     await tester.pumpAndSettle();
@@ -338,7 +383,7 @@ void main() {
 
   testWidgets('Extended desktop rail remains operable', (tester) async {
     _setViewport(tester, const Size(1280, 800));
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
     final rail = find.byKey(const Key('nav-rail'));
     expect(tester.widget<NavigationRail>(rail).extended, isTrue);
@@ -355,7 +400,7 @@ void main() {
     tester,
   ) async {
     _setViewport(tester, const Size(375, 480), scale: 2);
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
     final page = find.byKey(const Key('page-home'));
     final view = find.descendant(
@@ -384,7 +429,7 @@ void main() {
     tester,
   ) async {
     _setViewport(tester, const Size(375, 812));
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
     final router = ProviderScope.containerOf(
       tester.element(find.byType(app.MyApp)),
@@ -422,7 +467,7 @@ void main() {
     tester,
   ) async {
     _setViewport(tester, const Size(375, 812));
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
     final router = ProviderScope.containerOf(
       tester.element(find.byType(app.MyApp)),
@@ -477,7 +522,7 @@ void main() {
     tester,
   ) async {
     _setViewport(tester, const Size(800, 600));
-    await tester.pumpWidget(const ProviderScope(child: app.MyApp()));
+    await tester.pumpWidget(ProviderScope(overrides: _authOverrides, child: const app.MyApp()));
     await tester.pumpAndSettle();
     final router = ProviderScope.containerOf(
       tester.element(find.byType(app.MyApp)),

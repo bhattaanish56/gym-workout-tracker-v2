@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../features/auth/presentation/providers/auth_providers.dart';
+import '../features/sync/presentation/widgets/sync_status_indicator.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.navigationShell});
@@ -9,6 +11,8 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -17,7 +21,24 @@ class AppShell extends ConsumerWidget {
         final extendedRail = width >= 1200;
 
         return Scaffold(
+          appBar: AppBar(
+            title: const Text('Gym Workout Tracker'),
+            actions: [
+              const SyncStatusIndicator(),
+              IconButton(
+                icon: user?.photoUrl != null
+                    ? CircleAvatar(
+                        radius: 16,
+                        backgroundImage: NetworkImage(user!.photoUrl!),
+                      )
+                    : const Icon(Icons.account_circle),
+                onPressed: () => context.push('/profile'),
+                tooltip: 'Profile',
+              ),
+            ],
+          ),
           body: SafeArea(
+            top: false,
             child: Row(
               children: [
                 if (useRail)

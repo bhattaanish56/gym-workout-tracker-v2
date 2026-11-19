@@ -13,8 +13,9 @@ const _uuid = Uuid();
 
 class DriftExerciseRepository implements ExerciseRepository {
   final db.AppDatabase _db;
+  final String userId;
 
-  DriftExerciseRepository(this._db);
+  DriftExerciseRepository(this._db, this.userId);
 
   @override
   Future<List<Exercise>> getBundledExercises() async {
@@ -23,7 +24,9 @@ class DriftExerciseRepository implements ExerciseRepository {
 
   @override
   Future<List<domain.CustomExercise>> getCustomExercises() async {
-    final rows = await _db.select(_db.customExercises).get();
+    final rows = await (_db.select(_db.customExercises)
+          ..where((t) => t.userId.equals(userId)))
+        .get();
     return rows.map((row) {
       return domain.CustomExercise(
         id: RecordId(row.id),
@@ -95,6 +98,7 @@ class DriftExerciseRepository implements ExerciseRepository {
         .insert(
           db.CustomExercisesCompanion.insert(
             id: id.value,
+            userId: Value(userId),
             name: name,
             equipment: equipment.toJson(),
             primaryMuscle: primaryMuscle.toJson(),
@@ -117,6 +121,6 @@ class DriftExerciseRepository implements ExerciseRepository {
   Future<void> deleteCustomExercise(String id) async {
     await (_db.delete(
       _db.customExercises,
-    )..where((tbl) => tbl.id.equals(id))).go();
+    )..where((tbl) => tbl.id.equals(id) & tbl.userId.equals(userId))).go();
   }
 }

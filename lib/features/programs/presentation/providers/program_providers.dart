@@ -10,7 +10,9 @@ import '../../domain/repositories/program_repository.dart';
 
 final programRepositoryProvider = Provider<ProgramRepository>((ref) {
   final db = ref.watch(databaseProvider);
-  return DriftProgramRepository(db);
+  final userId = ref.watch(currentUserIdProvider);
+  final syncHooks = ref.watch(syncHooksProvider);
+  return DriftProgramRepository(db, userId, syncHooks);
 });
 
 final allProgramsProvider = StreamProvider<List<Program>>((ref) {
