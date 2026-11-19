@@ -83,4 +83,38 @@ class SyncHooks {
       data: data,
     );
   }
+
+  // Nutrition sync hooks
+  Future<void> onMealEntryCreated(String mealId, Map<String, dynamic> data) async {
+    if (_coordinator == null) return;
+
+    await _coordinator.enqueueOperation(
+      collection: 'meal_entries',
+      recordId: mealId,
+      operationType: SyncOperationType.create,
+      data: data,
+    );
+  }
+
+  Future<void> onMealEntryDeleted(String mealId) async {
+    if (_coordinator == null) return;
+
+    await _coordinator.enqueueOperation(
+      collection: 'meal_entries',
+      recordId: mealId,
+      operationType: SyncOperationType.delete,
+      data: null,
+    );
+  }
+
+  Future<void> onCustomFoodCreated(String foodId, Map<String, dynamic> data) async {
+    if (_coordinator == null) return;
+
+    await _coordinator.enqueueOperation(
+      collection: 'custom_foods',
+      recordId: foodId,
+      operationType: SyncOperationType.create,
+      data: data,
+    );
+  }
 }

@@ -184,6 +184,47 @@ class UserProfile extends Table {
   Set<Column> get primaryKey => {userId};
 }
 
+/// Foods table for nutrition tracking.
+class Foods extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text().nullable()(); // null for bundled foods, userId for custom
+  TextColumn get name => text()();
+  TextColumn get source => text()(); // 'usda', 'off', 'custom'
+  TextColumn get brandName => text().nullable()();
+  TextColumn get sourceId => text().nullable()(); // USDA FDC ID or OFF barcode
+  RealColumn get caloriesPer100g => real()();
+  RealColumn get proteinPer100g => real()();
+  RealColumn get carbsPer100g => real()();
+  RealColumn get fatPer100g => real()();
+  RealColumn get fiberPer100g => real().nullable()();
+  RealColumn get sugarPer100g => real().nullable()();
+  TextColumn get servingUnit => text()();
+  RealColumn get servingSizeGrams => real()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Meal entries table.
+class MealEntries extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  DateTimeColumn get date => dateTime()();
+  TextColumn get mealType => text()(); // 'breakfast', 'lunch', 'dinner', 'snack'
+  TextColumn get foodId => text().references(Foods, #id)();
+  TextColumn get foodSnapshot => text()(); // JSON snapshot of food at log time
+  RealColumn get servings => real()();
+  RealColumn get calories => real()(); // Calculated at log time
+  RealColumn get protein => real()();
+  RealColumn get carbs => real()();
+  RealColumn get fat => real()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Sync operations queue.
 class SyncOperations extends Table {
   TextColumn get id => text()();
@@ -215,6 +256,8 @@ class SyncOperations extends Table {
     WeekdayAssignments,
     BodyWeightEntries,
     UserProfile,
+    Foods,
+    MealEntries,
     SyncOperations,
   ],
 )
@@ -223,7 +266,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withQueryExecutor(super.e);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration {
@@ -310,6 +353,11 @@ class AppDatabase extends _$AppDatabase {
               rethrow;
             }
           }
+        }
+        // v10 -> v11: Add nutrition tracking tables
+        if (from <= 10 && to >= 11) {
+          await m.createTable(foods);
+          await m.createTable(mealEntries);
         }
       },
       beforeOpen: (details) async {
