@@ -30,22 +30,29 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     final exercisesAsync = ref.watch(exerciseSearchProvider(searchParams));
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                decoration: InputDecoration(
-                  labelText: 'Search exercises',
-                  labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  border: const OutlineInputBorder(),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Exercises',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Search exercises',
+                  prefixIcon: Icon(Icons.search),
                 ),
                 onChanged: (value) => setState(() => _searchQuery = value),
               ),
@@ -106,15 +113,43 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
               child: exercisesAsync.when(
                 data: (exercises) {
                   if (exercises.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No exercises found',
-                        style: TextStyle(color: Colors.white70),
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.fitness_center,
+                                  size: 40,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No exercises found',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Try adjusting your filters',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     );
                   }
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                     itemCount: exercises.length,
                     itemBuilder: (context, index) {
                       final exercise = exercises[index];
@@ -126,7 +161,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 error: (err, stack) => Center(
                   child: Text(
                     'Error: $err',
-                    style: const TextStyle(color: Colors.red),
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
               ),
@@ -142,7 +177,6 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           );
           ref.invalidate(exerciseSearchProvider);
         },
-        backgroundColor: const Color(0xFFFF6B00),
         icon: const Icon(Icons.add),
         label: const Text('Custom Exercise'),
       ),
@@ -170,8 +204,8 @@ class _ExerciseCard extends StatelessWidget {
         ? exercise.id
         : (exercise as CustomExercise).id.value;
 
+    final theme = Theme.of(context);
     return Card(
-      color: const Color(0xFF1C1E23),
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () => context.push('/exercises/$id', extra: exercise),
@@ -184,12 +218,12 @@ class _ExerciseCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.2),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _getEquipmentIcon(equipment),
-                  color: const Color(0xFFFF6B00),
+                  color: theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 16),
@@ -199,24 +233,24 @@ class _ExerciseCard extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${equipment.label} • ${muscle.label}',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.white54),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
         ),

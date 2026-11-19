@@ -33,35 +33,41 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     final userHeight = ref.watch(userHeightProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Progress')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'Progress',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
             _buildSummaryCards(workoutStats, streakData),
             const SizedBox(height: 24),
             _buildBodyWeightSection(bodyWeightHistory, latestWeight),
             const SizedBox(height: 24),
             _buildBMISection(userHeight, latestWeight),
-            const SizedBox(height: 24),
+            const SizedBox(height: 80),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          final messenger = ScaffoldMessenger.of(context);
           final result = await showDialog<bool>(
             context: context,
             builder: (context) => const AddBodyWeightDialog(),
           );
           if (!mounted) return;
           if (result == true) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Weight added')));
+            messenger.showSnackBar(const SnackBar(content: Text('Weight added')));
           }
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Weight'),
       ),
     );
   }

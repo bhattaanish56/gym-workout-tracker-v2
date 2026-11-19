@@ -6,6 +6,7 @@ import '../../../sessions/presentation/providers/workout_providers.dart';
 import '../../../programs/presentation/providers/program_providers.dart';
 import '../../../programs/domain/models/program.dart';
 import '../../../progress/presentation/providers/progress_providers.dart';
+import '../../../../core/presentation/providers/theme_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({
@@ -49,21 +50,35 @@ class HomeScreen extends ConsumerWidget {
             // Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _getGreeting(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(),
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            dateFormat.format(now),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      dateFormat.format(now),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    Consumer(
+                      builder: (context, ref, _) => IconButton(
+                        icon: const Icon(Icons.brightness_6),
+                        onPressed: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+                        tooltip: 'Toggle theme',
                       ),
                     ),
                   ],

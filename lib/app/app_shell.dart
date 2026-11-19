@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../core/presentation/providers/theme_provider.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.navigationShell});
@@ -18,20 +17,6 @@ class AppShell extends ConsumerWidget {
         final extendedRail = width >= 1200;
 
         return Scaffold(
-          appBar: AppBar(
-            actions: [
-              PopupMenuButton<void>(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: const Text('Toggle Theme'),
-                    onTap: () {
-                      ref.read(themeModeProvider.notifier).toggleTheme();
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
           body: SafeArea(
             child: Row(
               children: [
@@ -40,7 +25,10 @@ class AppShell extends ConsumerWidget {
                     key: const Key('nav-rail'),
                     selectedIndex: navigationShell.currentIndex,
                     onDestinationSelected: (index) {
-                      navigationShell.goBranch(index, initialLocation: false);
+                      navigationShell.goBranch(
+                        index,
+                        initialLocation: index == navigationShell.currentIndex,
+                      );
                     },
                     extended: extendedRail,
                     labelType: extendedRail
@@ -86,7 +74,10 @@ class AppShell extends ConsumerWidget {
                   labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                   selectedIndex: navigationShell.currentIndex,
                   onDestinationSelected: (index) {
-                    navigationShell.goBranch(index, initialLocation: false);
+                    navigationShell.goBranch(
+                      index,
+                      initialLocation: index == navigationShell.currentIndex,
+                    );
                   },
                   destinations: const [
                     NavigationDestination(

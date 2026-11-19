@@ -18,18 +18,14 @@ class ProgramsScreen extends ConsumerWidget {
     final activeProgramAsync = ref.watch(activeProgramProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Workout Plans'),
+      ),
       body: PageFrame(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Semantics(
-              header: true,
-              child: Text(
-                'Workout Plans',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
             programsAsync.when(
               data: (programs) => _buildContent(
                 context,

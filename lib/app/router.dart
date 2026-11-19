@@ -53,8 +53,11 @@ GoRouter createAppRouter({String initialLocation = '/home'}) {
                 routes: [
                   GoRoute(
                     path: 'programs',
-                    builder: (context, state) {
-                      return const ProgramsScreen(key: Key('page-programs'));
+                    pageBuilder: (context, state) {
+                      return NoTransitionPage(
+                        key: state.pageKey,
+                        child: const ProgramsScreen(key: Key('page-programs')),
+                      );
                     },
                     routes: [
                       GoRoute(

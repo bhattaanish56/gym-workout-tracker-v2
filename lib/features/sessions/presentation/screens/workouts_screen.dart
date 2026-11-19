@@ -36,7 +36,7 @@ class WorkoutsScreen extends ConsumerWidget {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: Text(
                   'Workouts',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -259,33 +259,36 @@ class WorkoutsScreen extends ConsumerWidget {
                   });
 
                 if (completed.isEmpty) {
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.fitness_center,
-                              size: 64,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No workouts yet',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Start your first workout to see it here',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  return SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.fitness_center,
+                                size: 40,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                              const SizedBox(height: 12),
+                              Text(
+                                'No workouts yet',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Start your first workout above',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -706,7 +709,7 @@ class _ActiveWorkoutEditorState extends ConsumerState<ActiveWorkoutEditor> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                     border: Border.all(color: Theme.of(context).colorScheme.error),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1037,8 +1040,8 @@ class _SetRow extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: set.setType == domain.SetType.warmup
-                  ? Colors.blue.withOpacity(0.2)
-                  : Colors.green.withOpacity(0.2),
+                  ? Colors.blue.withValues(alpha: 0.2)
+                  : Colors.green.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
